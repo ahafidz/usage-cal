@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usage Per Day Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      color: #333;
+    }
+    .month-progress {
+      margin-bottom: 20px;
+    }
+    .progress-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .progress-bar {
+      background-color: #ddd;
+      border-radius: 5px;
+      overflow: hidden;
+      height: 20px;
+    }
+    .progress-fill {
+      background-color: #4CAF50;
+      height: 100%;
+      width: 0;
+      transition: width 0.3s ease;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input {
+      padding: 5px;
+      margin-top: 5px;
+      width: 200px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 1.2em;
+      color: #222;
+    }
+  </style>
+</head>
+<body>
+  <h1>Usage Per Day Calculator</h1>
+
+  <div class="month-progress">
+    <div class="progress-title">Current Day of Month:</div>
+    <div id="dateInfo"></div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <label for="currentUsage">Current Usage (%)</label>
+  <input type="number" id="currentUsage" step="0.01" placeholder="e.g. 1.6">
+
+  <label for="currentDate">Current Date</label>
+  <input type="date" id="currentDate">
+
+  <label for="endDate">End Date</label>
+  <input type="date" id="endDate">
+
+  <button onclick="calculateDailyUsage()">Calculate</button>
+
+  <div class="result" id="result"></div>
+
+  <script>
+    function updateMonthProgress() {
+      const today = new Date();
+      const currentDay = today.getDate();
+      const totalDays = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+      const percent = (currentDay / totalDays) * 100;
+
+      document.getElementById('dateInfo').textContent = `${currentDay}/${totalDays} (${percent.toFixed(2)}%)`;
+      document.getElementById('progressFill').style.width = percent.toFixed(2) + '%';
+    }
+
+    function calculateDailyUsage() {
+      const currentUsage = parseFloat(document.getElementById('currentUsage').value);
+      const currentDate = new Date(document.getElementById('currentDate').value);
+      const endDate = new Date(document.getElementById('endDate').value);
+
+      if (isNaN(currentUsage) || !currentDate || !endDate) {
+        document.getElementById('result').textContent = 'Please fill in all fields correctly.';
+        return;
+      }
+
+      const oneDay = 1000 * 60 * 60 * 24;
+      const daysRemaining = Math.floor((endDate - currentDate) / oneDay);
+      const remainingPercent = 100 - currentUsage;
+      const dailyAllowance = remainingPercent / daysRemaining;
+
+      document.getElementById('result').textContent = `You can use about ${dailyAllowance.toFixed(2)}% per day for the remaining ${daysRemaining} days.`;
+    }
+
+    updateMonthProgress();
+  </script>
+</body>
+</html>
