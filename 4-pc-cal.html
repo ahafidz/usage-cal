@@ -225,11 +225,32 @@ function runInvestment() {
         balance = balance * (1 + annualRate) + (pmt * 12);
     }
 
+    // ================= NORMAL SAVINGS =================
+    let savingsData = [];
+    let savingsBalance = p;
+
+    for (let i = 0; i <= years; i++) {
+        savingsData.push(savingsBalance);
+        savingsBalance += (pmt * 12);
+    }
+
     if (investmentChart) investmentChart.destroy();
 
     investmentChart = new Chart(document.getElementById("investmentChart"), {
         type: "line",
-        data: { labels, datasets: [{ label: "Investment Growth", data }] }
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: "Investment Growth",
+                    data
+                },
+                {
+                    label: "Normal Savings",
+                    data: savingsData
+                }
+            ]
+        }
     });
 }
 
