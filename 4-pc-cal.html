@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retirement + Investment Calculator</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    font-family: sans-serif;
+    background: #0f172a;
+    color: white;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.card {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 15px;
+    flex: 1 1 350px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0 15px 0;
+    border-radius: 8px;
+    border: none;
+}
+
+.big {
+    font-size: 2em;
+    color: #60a5fa;
+}
+
+.red {
+    color: #f87171;
+}
+
+.green {
+    color: #4ade80;
+}
+
+canvas {
+    margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- ================= RETIREMENT ================= -->
+<div class="card">
+<h2>Retirement Forecast</h2>
+
+<label>First Month Spending (RM)</label>
+<input type="number" id="spend" value="5000">
+
+<label>Retirement Duration (Years)</label>
+<input type="number" id="retireYears" value="30">
+
+<label>Withdrawal Rate (%)</label>
+<input type="number" id="withdrawal" value="4">
+
+<label>Annual Inflation (%)</label>
+<input type="number" id="inflation" value="3">
+
+<label>Annual Return (%)</label>
+<input type="number" id="return" value="5">
+
+<p>Required Nest Egg</p>
+<div class="big" id="target">RM 0</div>
+
+<p>Last Month Spending</p>
+<div class="big red" id="lastMonth">RM 0</div>
+
+<canvas id="spendingChart"></canvas>
+<canvas id="balanceChart"></canvas>
+</div>
+
+<!-- ================= INVESTMENT ================= -->
+<div class="card">
+<h2>Investment Calculator</h2>
+
+<label>Initial Balance (RM)</label>
+<input type="number" id="initial" value="25000">
+
+<label>Monthly Contribution (RM)</label>
+<input type="number" id="monthly" value="500">
+
+<label>Annual Return (%)</label>
+<input type="number" id="invRate" value="5">
+
+<label>Years</label>
+<input type="number" id="invYears" value="20">
+
+<p>Total Contributions</p>
+<div id="res-contributions">RM 0</div>
+
+<p>Total Dividends</p>
+<div id="res-dividends">RM 0</div>
+
+<p>Total Balance</p>
+<div class="big green" id="res-total">RM 0</div>
+
+<canvas id="investmentChart"></canvas>
+</div>
+
+</div>
+
+<script>
+let spendingChart, balanceChart, investmentChart;
+
+function runRetirement() {
+
+    const spend = parseFloat(document.getElementById("spend").value) || 0;
+    const years = parseFloat(document.getElementById("retireYears").value) || 0;
+    const withdrawal = parseFloat(document.getElementById("withdrawal").value) / 100 || 0;
+    const inflation = parseFloat(document.getElementById("inflation").value) / 100 || 0;
+    const annualReturn = parseFloat(document.getElementById("return").value) / 100 || 0;
+
+    const annualSpend = spend * 12;
+    const target = withdrawal > 0 ? annualSpend / withdrawal : 0;
+
+    const lastMonth = spend * Math.pow(1 + inflation, years);
+
+    document.getElementById("target").innerText =
+        "RM " + target.toLocaleString();
+
+    document.getElementById("lastMonth").innerText =
+        "RM " + lastMonth.toLocaleString(undefined, {maximumFractionDigits:2});
+
+    // Spending graph
+    let labels = [], spendingData = [];
+
+    for (let i = 0; i <= years; i++) {
+        labels.push("Year " + i);
+        spendingData.push(spend * Math.pow(1 + inflation, i));
+    }
+
+    if (spendingChart) spendingChart.destroy();
+
+    spendingChart = new Chart(document.getElementById("spendingChart"), {
+        type: "line",
+        data: { labels, datasets: [{ label: "Spending", data: spendingData }] }
+    });
+
+    // Balance graph
+    let balance = target;
+    let balanceData = [];
+
+    for (let i = 0; i <= years; i++) {
+        balanceData.push(balance);
+
+        const yearlySpend = annualSpend * Math.pow(1 + inflation, i);
+
+        balance *= (1 + annualReturn);
+        balance -= yearlySpend;
+
+        if (balance < 0) balance = 0;
+    }
+
+    if (balanceChart) balanceChart.destroy();
+
+    balanceChart = new Chart(document.getElementById("balanceChart"), {
+        type: "line",
+        data: { labels, datasets: [{ label: "Balance", data: balanceData }] }
+    });
+}
+
+function runInvestment() {
+
+    const p = parseFloat(document.getElementById('initial').value) || 0;
+    const pmt = parseFloat(document.getElementById('monthly').value) || 0;
+    const annualRate = parseFloat(document.getElementById('invRate').value) / 100 || 0;
+    const years = parseFloat(document.getElementById('invYears').value) || 0;
+
+    const r = annualRate / 12;
+    const n = years * 12;
+
+    let total = 0;
+
+    if (r > 0) {
+        const fvInitial = p * Math.pow(1 + r, n);
+        const fvAnnuity = pmt * (Math.pow(1 + r, n) - 1) / r;
+        total = fvInitial + fvAnnuity;
+    } else {
+        total = p + (pmt * n);
+    }
+
+    const contributions = p + (pmt * n);
+    const dividends = total - contributions;
+
+    document.getElementById('res-contributions').innerText =
+        "RM " + contributions.toLocaleString(undefined, {maximumFractionDigits:2});
+
+    document.getElementById('res-dividends').innerText =
+        "RM " + dividends.toLocaleString(undefined, {maximumFractionDigits:2});
+
+    document.getElementById('res-total').innerText =
+        "RM " + total.toLocaleString(undefined, {maximumFractionDigits:2});
+
+    // Investment graph
+    let labels = [], data = [];
+    let balance = p;
+
+    for (let i = 0; i <= years; i++) {
+        labels.push("Year " + i);
+        data.push(balance);
+
+        balance = balance * (1 + annualRate) + (pmt * 12);
+    }
+
+    if (investmentChart) investmentChart.destroy();
+
+    investmentChart = new Chart(document.getElementById("investmentChart"), {
+        type: "line",
+        data: { labels, datasets: [{ label: "Investment Growth", data }] }
+    });
+}
+
+// Run everything
+function runAll() {
+    runRetirement();
+    runInvestment();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    runAll();
+    document.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", runAll);
+    });
+});
+</script>
+
+</body>
+</html>
