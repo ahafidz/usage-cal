@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Annuity & Retirement Calculator</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-dark: #388E3C;
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #e0e0e0;
+            --table-stripe: #f9f9f9;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tabs {
+            display: flex;
+            background: #e8f5e9;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--primary-dark);
+            transition: background 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .form-body {
+            padding: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .input-group input, .input-group select {
+            padding: 8px 10px;
+            border: none;
+            border-bottom: 2px solid #ccc;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            border-bottom-color: var(--primary-color);
+        }
+
+        .calc-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .calc-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .results-headline {
+            margin-top: 20px;
+            padding: 15px;
+            background: #edf7ed;
+            border-left: 5px solid var(--primary-color);
+            border-radius: 4px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            text-align: right;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f5f5f5;
+            position: sticky;
+            top: 0;
+            color: #555;
+            font-weight: bold;
+        }
+
+        th:nth-child(1), td:nth-child(1) { text-align: center; width: 40px; }
+
+        tr:nth-child(even) {
+            background-color: var(--table-stripe);
+        }
+
+        .summary-note {
+            font-size: 0.8rem;
+            color: #777;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <span>Annuity Calculator</span>
+            <span style="font-size: 1.1rem; font-weight: normal;">🧮</span>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('standard')">Find Payment Amount</button>
+            <button class="tab-btn" onclick="switchTab('reverse')">Find Required Principal</button>
+        </div>
+
+        <div class="form-body">
+            <!-- Grid 1: Main Numeric Inputs -->
+            <div class="grid-3">
+                <div class="input-group" id="principal-group">
+                    <label id="main-label">Begin Principal</label>
+                    <input type="text" id="main-input" value="729,480">
+                </div>
+                <div class="input-group">
+                    <label>Annual Interest %</label>
+                    <input type="number" id="interest-input" value="5" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Payout Years</label>
+                    <input type="number" id="years-input" value="30">
+                </div>
+            </div>
+
+            <!-- Grid 2: Configuration Dropdowns & Inflation -->
+            <div class="grid-3">
+                <div class="input-group">
+                    <label>Payment Type</label>
+                    <select id="type-input">
+                        <option value="beginning" selected>Beginning</option>
+                        <option value="end">End</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Payment Period</label>
+                    <select id="period-input">
+                        <option value="12" selected>Monthly</option>
+                        <option value="1">Annually</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Inflation (%)</label>
+                    <input type="number" id="inflation-input" value="3" step="0.1">
+                </div>
+            </div>
+
+            <button class="calc-btn" onclick="calculate()">Calculate Schedule</button>
+
+            <div class="results-headline" id="headline-output">
+                First Payment: RM 2,690.01
+            </div>
+
+            <div class="table-container">
+                <table id="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Payment</th>
+                            <th>Interest</th>
+                            <th>Balance</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Dynamic rows here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="summary-note">
+                *Uses exact financial compounding schedules with inflation step adjustments per period.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'standard'; // 'standard' or 'reverse'
+
+        // Helper to format currency
+        function formatCurr(num) {
+            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Helper to parse clean numbers from formatted text inputs
+        function parseNum(str) {
+            return parseFloat(str.replace(/,/g, '')) || 0;
+        }
+
+        // Format input fields on the fly
+        document.getElementById('main-input').addEventListener('blur', function(e) {
+            let val = parseNum(e.target.value);
+            e.target.value = val.toLocaleString('en-US');
+        });
+
+        function switchTab(mode) {
+            currentMode = mode;
+            const tabs = document.querySelectorAll('.tab-btn');
+            tabs[0].classList.toggle('active', mode === 'standard');
+            tabs[1].classList.toggle('active', mode === 'reverse');
+
+            const mainLabel = document.getElementById('main-label');
+            const mainInput = document.getElementById('main-input');
+
+            if (mode === 'standard') {
+                mainLabel.innerText = "Begin Principal";
+                mainInput.value = "729,480";
+            } else {
+                mainLabel.innerText = "Desired 1st Payment";
+                mainInput.value = "2,690.01";
+            }
+            calculate();
+        }
+
+        function calculate() {
+            const rawMain = parseNum(document.getElementById('main-input').value);
+            const annualInterest = parseFloat(document.getElementById('interest-input').value) / 100;
+            const years = parseInt(document.getElementById('years-input').value);
+            const paymentType = document.getElementById('type-input').value;
+            const periodsPerYear = parseInt(document.getElementById('period-input').value);
+            const annualInflation = parseFloat(document.getElementById('inflation-input').value) / 100;
+
+            const totalPeriods = years * periodsPerYear;
+            const ratePerPeriod = annualInterest / periodsPerYear;
+            const inflationPerPeriod = annualInflation / periodsPerYear;
+
+            let firstPayment = 0;
+            let beginPrincipal = 0;
+
+            // Mathematical calculation using a standard solver to find exact targets
+            if (currentMode === 'standard') {
+                beginPrincipal = rawMain;
+                // Solve for First Payment using growing annuity present value formula
+                let v = (1 + inflationPerPeriod) / (1 + ratePerPeriod);
+                let sumSeries = 0;
+                
+                if (paymentType === 'beginning') {
+                    for (let i = 0; i < totalPeriods; i++) {
+                        sumSeries += Math.pow(v, i);
+                    }
+                    firstPayment = beginPrincipal / sumSeries;
+                } else {
+                    for (let i = 1; i <= totalPeriods; i++) {
+                        sumSeries += Math.pow(v, i) / (1 + inflationPerPeriod); 
+                    }
+                    firstPayment = beginPrincipal / sumSeries;
+                }
+            } else {
+                firstPayment = rawMain;
+                // Solve for required Beginning Principal
+                let v = (1 + inflationPerPeriod) / (1 + ratePerPeriod);
+                let sumSeries = 0;
+                
+                if (paymentType === 'beginning') {
+                    for (let i = 0; i < totalPeriods; i++) {
+                        sumSeries += Math.pow(v, i);
+                    }
+                } else {
+                    for (let i = 1; i <= totalPeriods; i++) {
+                        sumSeries += Math.pow(v, i) / (1 + inflationPerPeriod);
+                    }
+                }
+                beginPrincipal = firstPayment * sumSeries;
+            }
+
+            // Fallback check
+            if (isNaN(firstPayment) || !isFinite(firstPayment)) return;
+
+            // Update Headline Output
+            if (currentMode === 'standard') {
+                document.getElementById('headline-output').innerText = `Calculated 1st Payment: RM ${formatCurr(firstPayment)}`;
+            } else {
+                document.getElementById('headline-output').innerText = `Required Principal: RM ${formatCurr(beginPrincipal)}`;
+            }
+
+            // Generate Schedule Table
+            let currentBalance = beginPrincipal;
+            let cumulativePayments = 0;
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            for (let i = 1; i <= totalPeriods; i++) {
+                // Payment scales up with inflation step-by-step
+                let paymentForPeriod = firstPayment * Math.pow(1 + inflationPerPeriod, i - 1);
+                let interestEarned = 0;
+                let principalAfterPayment = currentBalance;
+
+                if (paymentType === 'beginning') {
+                    principalAfterPayment = currentBalance - paymentForPeriod;
+                    interestEarned = principalAfterPayment * ratePerPeriod;
+                    currentBalance = principalAfterPayment + interestEarned;
+                } else {
+                    interestEarned = currentBalance * ratePerPeriod;
+                    currentBalance = currentBalance + interestEarned - paymentForPeriod;
+                }
+
+                cumulativePayments += paymentForPeriod;
+
+                // Create a row for display
+                let row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${i}</td>
+                    <td>${formatCurr(paymentForPeriod)}</td>
+                    <td>${formatCurr(interestEarned)}</td>
+                    <td>${formatCurr(Math.max(0, currentBalance))}</td>
+                    <td>${formatCurr(cumulativePayments)}</td>
+                `;
+                tbody.appendChild(row);
+            }
+        }
+
+        // Initial generation on load
+        window.onload = calculate;
+    </script>
+</body>
+</html>
