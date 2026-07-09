@@ -4,29 +4,957 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="0; url=main.html">
-    <title>Usage Per Day Calculator</title>
+    <title>Web Applications Directory - ahafidz/usage-cal</title>
+    <meta name="description"
+        content="Central hub and dynamic directory for all web calculators, sports tools, and HTML applications in the ahafidz/usage-cal GitHub repository.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
     <style>
-        body {
-            background-color: #0f121d;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: rgba(19, 26, 43, 0.7);
+            --bg-card-hover: rgba(28, 38, 64, 0.85);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(0, 255, 170, 0.4);
+            --accent-green: #00ffaa;
+            --accent-blue: #38bdf8;
+            --accent-purple: #a855f7;
+            --accent-amber: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        a {
-            color: #00ffaa;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Glow Backgrounds */
+        .ambient-glow {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(140px);
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.25;
+        }
+
+        .glow-1 {
+            top: -100px;
+            left: -100px;
+            background: var(--accent-green);
+        }
+
+        .glow-2 {
+            bottom: -150px;
+            right: -100px;
+            background: var(--accent-blue);
+        }
+
+        .glow-3 {
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--accent-purple);
+            opacity: 0.15;
+            width: 700px;
+            height: 700px;
+        }
+
+        /* Layout Container */
+        .container {
+            width: 100%;
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 24px;
+            z-index: 1;
+            position: relative;
+            flex: 1;
+        }
+
+        /* Header Section */
+        header {
+            padding: 48px 0 32px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .repo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-green);
             text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .repo-badge:hover {
+            background: rgba(0, 255, 170, 0.1);
+            border-color: var(--accent-green);
+            transform: translateY(-2px);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: rgba(15, 23, 42, 0.6);
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+        }
+
+        h1 {
+            font-size: 2.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 60%, #64748b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+        }
+
+        .subtitle {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 700px;
+            line-height: 1.6;
+        }
+
+        /* Search and Filter Controls */
+        .controls-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 36px;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 280px;
+            max-width: 450px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px 12px 42px;
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 3px rgba(0, 255, 170, 0.15);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            pointer-events: none;
+        }
+
+        .tag-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tag-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .tag-btn:hover,
+        .tag-btn.active {
+            background: rgba(0, 255, 170, 0.12);
+            color: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        /* Section Headings */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 24px;
+            background: var(--accent-green);
+            border-radius: 4px;
+        }
+
+        .section-header.auto-header h2::before {
+            background: var(--accent-blue);
+        }
+
+        .section-sub {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Grid Layouts */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 56px;
+        }
+
+        /* Card Styling */
+        .app-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            backdrop-filter: blur(12px);
+            transition: var(--transition);
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .app-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px -5px rgba(0, 255, 170, 0.15);
+        }
+
+        .app-card:hover::after {
+            opacity: 1;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .card-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .card-badges {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        .badge-calc {
+            background: rgba(0, 255, 170, 0.12);
+            color: #00ffaa;
+        }
+
+        .badge-sports {
+            background: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+        }
+
+        .badge-auto {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .badge-new {
+            background: linear-gradient(135deg, #f59e0b, #ec4899);
+            color: #ffffff;
+            font-weight: 600;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-2px);
+            }
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-desc {
+            font-size: 0.93rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 24px;
+            flex: 1;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 0.85rem;
+        }
+
+        .file-path {
+            font-family: 'Fira Code', monospace;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+
+        .launch-action {
+            color: var(--accent-green);
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+        }
+
+        .app-card:hover .launch-action {
+            transform: translateX(4px);
+            color: #ffffff;
+        }
+
+        /* Auto Detected Specific Styles */
+        #auto-detected-section {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        .auto-info-box {
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .auto-info-text {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .refresh-btn {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: var(--accent-blue);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+        }
+
+        .refresh-btn:hover {
+            background: rgba(56, 189, 248, 0.25);
+            color: #ffffff;
+        }
+
+        /* Loading state */
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 0;
+            color: var(--text-muted);
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(56, 189, 248, 0.2);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dim);
+            font-size: 1.05rem;
+            grid-column: 1 / -1;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 32px 0;
+            text-align: center;
+            font-size: 0.88rem;
+            color: var(--text-dim);
+            margin-top: auto;
+        }
+
+        footer a {
+            color: var(--accent-green);
+            text-decoration: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.1rem;
+            }
+
+            .apps-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .controls-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                max-width: 100%;
+            }
+
+            #auto-detected-section {
+                padding: 20px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <p>Redirecting to <a href="main.html">Usage Per Day Calculator</a>...</p>
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="header-top">
+                    <a href="https://github.com/ahafidz/usage-cal" target="_blank" rel="noopener noreferrer"
+                        class="repo-badge">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                            </path>
+                        </svg>
+                        ahafidz / usage-cal
+                    </a>
+                    <div class="status-pill" id="statusPill">
+                        <span class="status-dot"></span>
+                        <span id="statusText">Directory Active</span>
+                    </div>
+                </div>
+                <div>
+                    <h1>Web Applications & Tools</h1>
+                    <p class="subtitle">Central directory for all calculators, sports simulators, and utilities hosted on
+                        GitHub Pages. Explore featured tools or discover newly deployed HTML files.</p>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- Search & Filters -->
+            <section class="controls-section">
+                <div class="search-box">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search by name, file, or tag...">
+                </div>
+                <div class="tag-filters" id="tagFilters">
+                    <button class="tag-btn active" data-filter="all">All Apps</button>
+                    <button class="tag-btn" data-filter="calc">Calculators</button>
+                    <button class="tag-btn" data-filter="sports">Sports / World Cup</button>
+                    <button class="tag-btn" data-filter="auto">Uncategorised</button>
+                </div>
+            </section>
+
+            <!-- Curated / Known Applications -->
+            <section id="curated-section">
+                <div class="section-header">
+                    <h2>Featured & Core Applications</h2>
+                    <span class="section-sub">Curated interactive calculators and tools</span>
+                </div>
+                <div class="apps-grid" id="curatedGrid">
+                    <!-- Cards injected or hardcoded here -->
+                    <a href="main.html" class="app-card" data-category="calc" data-name="main.html usage per day calculator">
+                        <div>
+                            <div class="card-header">
+                                <div class="card-icon" style="color: #00ffaa;">⚡</div>
+                                <div class="card-badges">
+                                    <span class="badge badge-calc">Calculator</span>
+                                </div>
+                            </div>
+                            <div class="card-title">Usage Per Day Calculator</div>
+                            <p class="card-desc">Calculate daily percentage allowances and monitor consumption limits across
+                                any date range with live visual progress bars.</p>
+                        </div>
+                        <div class="card-footer">
+                            <span class="file-path">/main.html</span>
+                            <span class="launch-action">Launch App →</span>
+                        </div>
+                    </a>
+
+                    <a href="4-pc-cal.html" class="app-card" data-category="calc"
+                        data-name="4-pc-cal.html retirement investment calculator">
+                        <div>
+                            <div class="card-header">
+                                <div class="card-icon" style="color: #38bdf8;">📈</div>
+                                <div class="card-badges">
+                                    <span class="badge badge-calc">Calculator</span>
+                                </div>
+                            </div>
+                            <div class="card-title">Retirement + Investment Calc</div>
+                            <p class="card-desc">Advanced multi-tier financial projections with Chart.js visualization for
+                                long-term wealth, compound interest, and retirement planning.</p>
+                        </div>
+                        <div class="card-footer">
+                            <span class="file-path">/4-pc-cal.html</span>
+                            <span class="launch-action">Launch App →</span>
+                        </div>
+                    </a>
+
+                    <a href="annuity_calculator.html" class="app-card" data-category="calc"
+                        data-name="annuity_calculator.html annuity retirement">
+                        <div>
+                            <div class="card-header">
+                                <div class="card-icon" style="color: #f59e0b;">🏦</div>
+                                <div class="card-badges">
+                                    <span class="badge badge-calc">Calculator</span>
+                                </div>
+                            </div>
+                            <div class="card-title">Annuity & Retirement Calc</div>
+                            <p class="card-desc">Comprehensive tabular schedules and annuity payout models to evaluate
+                                steady-state retirement drawdowns and fund longevity.</p>
+                        </div>
+                        <div class="card-footer">
+                            <span class="file-path">/annuity_calculator.html</span>
+                            <span class="launch-action">Launch App →</span>
+                        </div>
+                    </a>
+
+                    <a href="wc2026.html" class="app-card" data-category="sports"
+                        data-name="wc2026.html fifa world cup 2026 road to final">
+                        <div>
+                            <div class="card-header">
+                                <div class="card-icon" style="color: #a855f7;">🏆</div>
+                                <div class="card-badges">
+                                    <span class="badge badge-sports">Sports & Data</span>
+                                </div>
+                            </div>
+                            <div class="card-title">FIFA World Cup 2026 Simulator</div>
+                            <p class="card-desc">Interactive tournament bracket, standings, and progression simulator for
+                                the expanded 48-team FIFA World Cup 2026.</p>
+                        </div>
+                        <div class="card-footer">
+                            <span class="file-path">/wc2026.html</span>
+                            <span class="launch-action">Launch App →</span>
+                        </div>
+                    </a>
+
+                    <a href="wc2026_editor.html" class="app-card" data-category="sports"
+                        data-name="wc2026_editor.html matches json editor diff viewer">
+                        <div>
+                            <div class="card-header">
+                                <div class="card-icon" style="color: #ec4899;">🛠️</div>
+                                <div class="card-badges">
+                                    <span class="badge badge-sports">Sports & Data</span>
+                                </div>
+                            </div>
+                            <div class="card-title">FIFA WC 2026 JSON Editor</div>
+                            <p class="card-desc">Advanced visual editor and JSON diff viewer for modifying match schedules,
+                                scores, and team metadata across the tournament.</p>
+                        </div>
+                        <div class="card-footer">
+                            <span class="file-path">/wc2026_editor.html</span>
+                            <span class="launch-action">Launch App →</span>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Uncategorised / Auto Detected Links Section -->
+            <section id="auto-detected-section">
+                <div class="section-header auto-header">
+                    <h2>Uncategorised</h2>
+                    <span class="section-sub">Dynamically detected HTML files not yet added to Featured & Core Applications</span>
+                </div>
+
+                <div class="auto-info-box">
+                    <div class="auto-info-text">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        <span>Because this repository (`ahafidz/usage-cal`) is public on GitHub Pages, this section automatically queries the repository structure at runtime. Any newly deployed `.html` files that are not listed above in Featured & Core Applications will appear right here!</span>
+                    </div>
+                    <button class="refresh-btn" id="refreshBtn" onclick="fetchRepoHtmlFiles()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 4v6h-6"></path>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        Refresh Sync
+                    </button>
+                </div>
+
+                <div id="autoLoading" class="loading-state">
+                    <div class="spinner"></div>
+                    <div>Querying GitHub REST API (`repos/ahafidz/usage-cal/contents`)...</div>
+                </div>
+
+                <div class="apps-grid" id="autoDetectedGrid" style="display: none;">
+                    <!-- Dynamically populated via JS -->
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Usage Per Day & Interactive Tools Directory • <a href="https://github.com/ahafidz/usage-cal"
+                    target="_blank">GitHub Repository</a> • Hosted on GitHub Pages</p>
+        </footer>
+    </div>
+
+    <script>
+        // Hardcoded known root HTML files (to distinguish newly added ones with a badge)
+        const KNOWN_HTML_FILES = [
+            'index.html',
+            'main.html',
+            '4-pc-cal.html',
+            'annuity_calculator.html',
+            'wc2026.html',
+            'wc2026_editor.html'
+        ];
+
+        // Format a raw HTML filename into a friendly readable title
+        function formatFilenameToTitle(filename) {
+            let name = filename.replace(/\.html$/i, '');
+            name = name.replace(/[-_]/g, ' ');
+            return name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+
+        // Fetch directory contents via GitHub REST API
+        async function fetchRepoHtmlFiles() {
+            const autoGrid = document.getElementById('autoDetectedGrid');
+            const autoLoading = document.getElementById('autoLoading');
+            const statusText = document.getElementById('statusText');
+
+            autoGrid.style.display = 'none';
+            autoLoading.style.display = 'flex';
+            autoGrid.innerHTML = '';
+
+            try {
+                // Query public GitHub repo contents API for the default branch root directory
+                const response = await fetch('https://api.github.com/repos/ahafidz/usage-cal/contents/', {
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`GitHub API returned status ${response.status}`);
+                }
+
+                const files = await response.json();
+                const htmlFiles = files.filter(item =>
+                    item.type === 'file' &&
+                    item.name.endsWith('.html') &&
+                    item.name.toLowerCase() !== 'index.html'
+                );
+
+                renderAutoDetectedFiles(htmlFiles);
+                statusText.textContent = `GitHub Sync Active (${htmlFiles.length} HTML files)`;
+            } catch (error) {
+                console.warn('Live GitHub API fetch failed or rate limited, attempting local fallback:', error);
+                statusText.textContent = 'Offline / Local Directory Mode';
+
+                // Fallback list of known files if API is unreachable (e.g. offline testing)
+                const fallbackList = KNOWN_HTML_FILES
+                    .filter(name => name !== 'index.html')
+                    .map(name => ({
+                        name: name,
+                        path: name,
+                        html_url: `https://github.com/ahafidz/usage-cal/blob/main/${name}`
+                    }));
+
+                renderAutoDetectedFiles(fallbackList, true);
+            } finally {
+                autoLoading.style.display = 'none';
+                autoGrid.style.display = 'grid';
+                applySearchAndFilters(); // Re-apply current active filters to new cards
+            }
+        }
+
+        function renderAutoDetectedFiles(fileList, isFallback = false) {
+            const autoGrid = document.getElementById('autoDetectedGrid');
+            autoGrid.innerHTML = '';
+
+            // Filter to only show files that are NOT in KNOWN_HTML_FILES (Featured & Core Applications)
+            const knownLower = KNOWN_HTML_FILES.map(f => f.toLowerCase());
+            const uncategorisedFiles = fileList.filter(file => !knownLower.includes(file.name.toLowerCase()));
+
+            if (uncategorisedFiles.length === 0) {
+                autoGrid.innerHTML = `
+                    <div class="empty-message" style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 36px;">
+                        <div style="font-size: 1.5rem; margin-bottom: 8px;">✨ All caught up!</div>
+                        <div>All current HTML applications in the repository root are already categorized in <strong>Featured & Core Applications</strong> above.</div>
+                        <div style="margin-top: 6px; font-size: 0.88rem; color: #64748b;">When new HTML files are added via \`git push\`, they will automatically appear in this section.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            uncategorisedFiles.forEach(file => {
+                const title = formatFilenameToTitle(file.name);
+                const desc = `Automatically detected from GitHub repository root (\`ahafidz/usage-cal\`). This HTML page is not yet added to Featured & Core Applications above.`;
+
+                const card = document.createElement('a');
+                card.href = file.path;
+                card.className = 'app-card auto-card';
+                card.setAttribute('data-category', 'auto');
+                card.setAttribute('data-name', `${file.name} ${title.toLowerCase()} uncategorised auto detected`);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="card-header">
+                            <div class="card-icon" style="color: #38bdf8;">🌐</div>
+                            <div class="card-badges">
+                                <span class="badge badge-auto">Uncategorised</span>
+                                <span class="badge badge-new">✨ New App</span>
+                                ${isFallback ? '<span class="badge" style="background:rgba(255,255,255,0.06);color:#94a3b8;">Local Sync</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="card-title">
+                            <span>${title}</span>
+                        </div>
+                        <p class="card-desc">${desc}</p>
+                    </div>
+                    <div class="card-footer">
+                        <span class="file-path">/${file.name}</span>
+                        <span class="launch-action">Open Page →</span>
+                    </div>
+                `;
+
+                autoGrid.appendChild(card);
+            });
+        }
+
+        // Search and Category Filtering Logic
+        function applySearchAndFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const activeTagBtn = document.querySelector('.tag-btn.active');
+            const filterCategory = activeTagBtn ? activeTagBtn.getAttribute('data-filter') : 'all';
+
+            const allCards = document.querySelectorAll('.app-card');
+            let visibleCount = 0;
+
+            allCards.forEach(card => {
+                const category = card.getAttribute('data-category');
+                const nameText = card.getAttribute('data-name') || '';
+                const titleText = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
+                const descText = card.querySelector('.card-desc')?.textContent.toLowerCase() || '';
+
+                const matchesSearch = !query || nameText.includes(query) || titleText.includes(query) || descText.includes(query);
+                const matchesCategory = (filterCategory === 'all') ||
+                    (filterCategory === category) ||
+                    (filterCategory === 'auto' && card.classList.contains('auto-card')) ||
+                    (filterCategory === 'calc' && category === 'calc') ||
+                    (filterCategory === 'sports' && category === 'sports');
+
+                if (matchesSearch && matchesCategory) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Event Listeners for Search and Filters
+        document.getElementById('searchInput').addEventListener('input', applySearchAndFilters);
+
+        document.querySelectorAll('.tag-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                applySearchAndFilters();
+            });
+        });
+
+        // Initialize auto-detection on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchRepoHtmlFiles();
+        });
+    </script>
 </body>
 
 </html>
