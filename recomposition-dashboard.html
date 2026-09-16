@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recomposition Dashboard</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --background: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --border: #e9ecef;
+            --success: #27ae60;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 1rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--primary);
+            transition: transform 0.2s;
+        }
+
+        .settings-btn:hover {
+            transform: rotate(45deg);
+        }
+
+        /* Settings Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 1rem;
+        }
+
+        .modal-content input[type="date"] {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            border: none;
+            background: var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+            color: var(--primary);
+            transition: background 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Cards & Lists */
+        .card {
+            background: var(--background);
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.25rem;
+        }
+
+        ul {
+            list-style-position: inside;
+            margin-left: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--background);
+        }
+
+        .highlight-box {
+            background: #e8f4fd;
+            border-left: 4px solid var(--secondary);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .tag {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Recomposition Plan</h1>
+        <button class="settings-btn" onclick="openModal()">⚙️</button>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h3>Program Settings</h3>
+            <label for="startDate">First Week Date:</label>
+            <input type="date" id="startDate" value="2026-09-14">
+            <button class="btn" onclick="saveSettings()">Save & Update</button>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('cheat-sheet')">Current Week</button>
+        <button class="tab-btn" onclick="switchTab('meal-plan')">Meal Plan & Grocery</button>
+        <button class="tab-btn" onclick="switchTab('workout-plan')">Full Workout Plan</button>
+        <button class="tab-btn" onclick="switchTab('overview')">Program Overview</button>
+    </div>
+
+    <!-- TAB 1: Current Week Cheat Sheet -->
+    <div id="cheat-sheet" class="tab-content active">
+        <div class="tag" id="week-badge">Week 1</div>
+        <div class="highlight-box">
+            <strong>Current Priorities:</strong> <span id="dynamic-priorities">Do not reinjure knee/shoulder. Average ~2,000 kcal.</span>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3>🎯 Weekly Targets</h3>
+                <ul>
+                    <li><strong>Daily Steps:</strong> <span id="target-steps">3,500</span></li>
+                    <li><strong>Zone 2 Cardio:</strong> <span id="target-cardio">3 × 20 min</span></li>
+                    <li><strong>Lifting Frequency:</strong> <span id="target-lifts">2 days/week</span></li>
+                    <li><strong>Lifting Intensity:</strong> <span id="target-intensity">1 working set per exercise, 4 Reps in Reserve</span></li>
+                    <li><strong>Daily Calories:</strong> ~2,000 kcal</li>
+                    <li><strong>Daily Protein:</strong> 150–170 g</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>📅 Schedule Template</h3>
+                <table id="dynamic-schedule">
+                    <!-- Populated by JS -->
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: Meal Plan & Groceries -->
+    <div id="meal-plan" class="tab-content">
+        <h2>Diet Framework (~2,000 kcal)</h2>
+        <p>Goal: ~150-170g Protein | ~60-70g Fat | ~160-190g Carbs</p>
+        
+        <div class="grid-2" style="margin-top: 1rem;">
+            <div>
+                <div class="card">
+                    <h3>Meal 1: Tofu/Egg Wrap (~500 kcal, ~42g pro)</h3>
+                    <ul>
+                        <li>180–200g Hard tofu</li>
+                        <li>2 Eggs</li>
+                        <li>100–150g Oyster mushrooms & greens</li>
+                        <li>1 Mission reduced-carb wrap</li>
+                        <li>30–50g Kimchi</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Meal 2: High-Protein Bibimbap (~600 kcal, ~40g pro)</h3>
+                    <ul>
+                        <li>120–160g Cooked basmati rice</li>
+                        <li>80–100g Tempeh</li>
+                        <li>120–150g Hard tofu</li>
+                        <li>200–300g Mixed vegetables & greens</li>
+                        <li>15–25g Bibimbap sauce (measured!)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div>
+                <div class="card">
+                    <h3>Meal 3: Fish/Seafood Dinner (~550 kcal, ~45g pro)</h3>
+                    <ul>
+                        <li>180–220g White fish or shrimp (rotate salmon/mackerel)</li>
+                        <li>130–170g Cooked basmati rice</li>
+                        <li>250–350g Mixed veg + mushrooms</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Dessert: Berry Creami (~250 kcal, ~23g pro)</h3>
+                    <ul>
+                        <li>250ml HL Advance milk</li>
+                        <li>15g Soy Protein Isolate (SPI)</li>
+                        <li>80-120g Berries</li>
+                        <li>Monk-fruit/erythritol, vanilla, xanthan gum</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🛒 Recommended Grocery List</h3>
+            <div class="grid-2">
+                <ul>
+                    <strong>Proteins & Dairy</strong>
+                    <li>Hard tofu</li>
+                    <li>Eggs</li>
+                    <li>Tempeh</li>
+                    <li>White fish / Shrimp</li>
+                    <li>Salmon / Sardines / Mackerel</li>
+                    <li>HL Advance Milk</li>
+                    <li>Soy Protein Isolate (SPI)</li>
+                </ul>
+                <ul>
+                    <strong>Produce & Pantry</strong>
+                    <li>Oyster mushrooms</li>
+                    <li>Leafy greens & Mixed vegetables</li>
+                    <li>Berries / Mango</li>
+                    <li>Mission reduced-carb wraps</li>
+                    <li>Basmati rice</li>
+                    <li>Kimchi & Bibimbap sauce</li>
+                    <li>Monk-fruit / Erythritol</li>
+                    <li>Xanthan gum & Dutch cocoa</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: Full Workout Plan -->
+    <div id="workout-plan" class="tab-content">
+        <h2>Resistance Training (Double Progression)</h2>
+        <div class="highlight-box">
+            <strong>Rule:</strong> Do not test old strength. Once you hit the top rep range for all sets with 2-3 reps in reserve (and joint is pain-free), add 2.5-5% weight.
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3>Workout A</h3>
+                <table>
+                    <tr><td>Recumbent/Stationary bike</td><td>7–10 min</td></tr>
+                    <tr><td>Leg press (comfortable ROM)</td><td>8–12 reps</td></tr>
+                    <tr><td>Romanian deadlift</td><td>8–12 reps</td></tr>
+                    <tr><td>Chest-supported row (neutral)</td><td>8–12 reps</td></tr>
+                    <tr><td>Machine/cable chest press</td><td>8–12 reps</td></tr>
+                    <tr><td>Hamstring curl</td><td>10–15 reps</td></tr>
+                    <tr><td>Calf raise</td><td>10–15 reps</td></tr>
+                    <tr><td>Pallof press</td><td>10–15/side</td></tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Workout B</h3>
+                <table>
+                    <tr><td>Recumbent/Stationary bike</td><td>7–10 min</td></tr>
+                    <tr><td>Hip thrust / glute bridge</td><td>8–12 reps</td></tr>
+                    <tr><td>Leg press or box sit-to-stand</td><td>8–12 reps</td></tr>
+                    <tr><td>Neutral-grip lat pulldown*</td><td>8–12 reps</td></tr>
+                    <tr><td>Chest-supported/cable row</td><td>10–12 reps</td></tr>
+                    <tr><td>Light pain-free chest press</td><td>8–12 reps</td></tr>
+                    <tr><td>Hamstring curl</td><td>10–15 reps</td></tr>
+                    <tr><td>Dead bug or side plank</td><td>2 sets</td></tr>
+                </table>
+                <small><em>*Only if shoulder tolerates overhead pulling</em></small>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: Program Overview -->
+    <div id="overview" class="tab-content">
+        <h2>Starting Point & Targets</h2>
+        <div class="card">
+            <p><strong>Initial Focus:</strong> A recomposition-focused fat-loss phase taking into account a 5-year lifting layoff, joint history, and elevated HbA1c/lipids.</p>
+            <table style="margin-top: 1rem;">
+                <tr><th>Metric</th><th>Start</th><th>12-Month Target</th></tr>
+                <tr><td>Weight</td><td>95 kg</td><td>~80–85 kg</td></tr>
+                <tr><td>Body Fat</td><td>~32.3%</td><td>~20–23%</td></tr>
+                <tr><td>Steps</td><td>~1.4k-3.5k</td><td>5,000+ / day</td></tr>
+                <tr><td>Zone 2</td><td>Minimal</td><td>120-150 min / week</td></tr>
+            </table>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3>🩸 Blood Work Context</h3>
+                <ul>
+                    <li><strong>HbA1c (5.8%):</strong> Prediabetes range. A 5-7% weight loss (reaching 88-90kg) and 150min/week activity is clinically meaningful here.</li>
+                    <li><strong>Lipids:</strong> Elevated LDL/Total. Current pescetarian/soy/fish diet base is excellent. Avoid saturated-fat heavy keto.</li>
+                    <li><strong>GGT (61 U/L):</strong> Elevated. Worth repeating in 3 months with GP alongside lipids and fasting glucose. Avoid alcohol for now.</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>⚖️ How to track progress</h3>
+                <ul>
+                    <li>Take 7-day scale averages, ignore daily fluctuations.</li>
+                    <li>Measure waist once per week in the same spot.</li>
+                    <li>If weight/waist stalls for 3 consecutive weeks with good adherence, drop 100-150 kcal.</li>
+                    <li>Take monthly photos. 2kg of muscle gain masked by 2kg of fat loss will look radically different despite the scale not moving.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Modal Logic
+        function openModal() {
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('settingsModal')) {
+                closeModal();
+            }
+        }
+
+        // Program Logic
+        function saveSettings() {
+            const startDateStr = document.getElementById('startDate').value;
+            localStorage.setItem('recompStartDate', startDateStr);
+            updateDashboard();
+            closeModal();
+        }
+
+        function calculateWeek(startDateStr) {
+            const start = new Date(startDateStr);
+            const now = new Date();
+            
+            // Reset times to midnight for accurate day counting
+            start.setHours(0,0,0,0);
+            now.setHours(0,0,0,0);
+            
+            const diffTime = now - start;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            let week = Math.floor(diffDays / 7) + 1;
+            if (week < 1) week = 1; // If future date, default to week 1
+            return week;
+        }
+
+        function updateDashboard() {
+            let startDateStr = localStorage.getItem('recompStartDate');
+            if (!startDateStr) {
+                startDateStr = '2026-09-14'; // Default
+                document.getElementById('startDate').value = startDateStr;
+            } else {
+                document.getElementById('startDate').value = startDateStr;
+            }
+
+            const currentWeek = calculateWeek(startDateStr);
+            document.getElementById('week-badge').innerText = `Week ${currentWeek}`;
+
+            // Phase definitions
+            let steps, cardio, lifts, intensity, scheduleHtml;
+
+            if (currentWeek <= 2) {
+                steps = "3,500";
+                cardio = "3 × 20 min";
+                lifts = "2 days/week";
+                intensity = "1 working set per exercise, ~4 Reps in Reserve";
+                scheduleHtml = `
+                    <tr><td>Monday</td><td>Workout A</td></tr>
+                    <tr><td>Tuesday</td><td>Zone 2 (20m)</td></tr>
+                    <tr><td>Wednesday</td><td>Easy Steps</td></tr>
+                    <tr><td>Thursday</td><td>Workout B</td></tr>
+                    <tr><td>Friday</td><td>Zone 2 (20m)</td></tr>
+                    <tr><td>Saturday</td><td>Easy Zone 2 (20m) or walk</td></tr>
+                    <tr><td>Sunday</td><td>Recovery</td></tr>
+                `;
+            } else if (currentWeek <= 4) {
+                steps = "4,000";
+                cardio = "3 × 25 min";
+                lifts = "2 days/week";
+                intensity = "2 working sets per exercise, ~3 Reps in Reserve";
+                scheduleHtml = `
+                    <tr><td>Monday</td><td>Workout A</td></tr>
+                    <tr><td>Tuesday</td><td>Zone 2 (25m)</td></tr>
+                    <tr><td>Wednesday</td><td>Easy Steps</td></tr>
+                    <tr><td>Thursday</td><td>Workout B</td></tr>
+                    <tr><td>Friday</td><td>Zone 2 (25m)</td></tr>
+                    <tr><td>Saturday</td><td>Easy Zone 2 (25m) or walk</td></tr>
+                    <tr><td>Sunday</td><td>Recovery</td></tr>
+                `;
+            } else if (currentWeek <= 8) {
+                steps = "4,500";
+                cardio = "3 × 30 min";
+                lifts = "3 days/week";
+                intensity = "2 working sets per exercise, 2-3 Reps in Reserve";
+                scheduleHtml = `
+                    <tr><td>Monday</td><td>Workout A</td></tr>
+                    <tr><td>Tuesday</td><td>Zone 2 (30m)</td></tr>
+                    <tr><td>Wednesday</td><td>Workout B</td></tr>
+                    <tr><td>Thursday</td><td>Easy Movement</td></tr>
+                    <tr><td>Friday</td><td>Workout A (Rotate to B next week)</td></tr>
+                    <tr><td>Saturday</td><td>Zone 2 (30m)</td></tr>
+                    <tr><td>Sunday</td><td>Recovery</td></tr>
+                `;
+            } else {
+                // Week 9+
+                steps = "5,000+";
+                cardio = "~120-150 min/week total";
+                lifts = "3 days/week";
+                intensity = "2-3 working sets per exercise, 2-3 Reps in Reserve";
+                scheduleHtml = `
+                    <tr><td>Monday</td><td>Workout A</td></tr>
+                    <tr><td>Tuesday</td><td>Zone 2 (40m)</td></tr>
+                    <tr><td>Wednesday</td><td>Workout B</td></tr>
+                    <tr><td>Thursday</td><td>Easy Movement / Walk</td></tr>
+                    <tr><td>Friday</td><td>Workout A (Rotate to B next week)</td></tr>
+                    <tr><td>Saturday</td><td>Zone 2 (40m)</td></tr>
+                    <tr><td>Sunday</td><td>Recovery</td></tr>
+                `;
+            }
+
+            // Apply updates
+            document.getElementById('target-steps').innerText = steps;
+            document.getElementById('target-cardio').innerText = cardio;
+            document.getElementById('target-lifts').innerText = lifts;
+            document.getElementById('target-intensity').innerText = intensity;
+            document.getElementById('dynamic-schedule').innerHTML = scheduleHtml;
+        }
+
+        // Initialize on load
+        window.onload = updateDashboard;
+    </script>
+</body>
+</html>
