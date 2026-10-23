@@ -1,0 +1,2464 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Male US Navy Body Fat Calculator & Neck/Waist Graph - ahafidz/usage-cal</title>
+    <meta name="description"
+        content="Interactive male-only US Navy Body Fat Calculator featuring live 2D Neck-over-Waist contour heatmap, dynamic weight slider (±20kg), category breakdown, and goal planner.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: rgba(19, 26, 43, 0.75);
+            --bg-card-hover: rgba(28, 38, 64, 0.85);
+            --bg-card-solid: #111827;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(0, 255, 170, 0.4);
+            --accent-green: #00ffaa;
+            --accent-blue: #38bdf8;
+            --accent-purple: #a855f7;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --accent-cyan: #06b6d4;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+            /* Category Colors */
+            --cat-essential: #0284c7;
+            --cat-athlete: #10b981;
+            --cat-fitness: #00ffaa;
+            --cat-average: #f59e0b;
+            --cat-obese: #f43f5e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Glow Backgrounds */
+        .ambient-glow {
+            position: fixed;
+            width: 550px;
+            height: 550px;
+            border-radius: 50%;
+            filter: blur(140px);
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.22;
+        }
+
+        .glow-1 {
+            top: -100px;
+            left: -100px;
+            background: var(--accent-green);
+        }
+
+        .glow-2 {
+            bottom: -150px;
+            right: -100px;
+            background: var(--accent-blue);
+        }
+
+        .glow-3 {
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--accent-purple);
+            opacity: 0.12;
+            width: 750px;
+            height: 750px;
+        }
+
+        .page-wrapper {
+            width: 100%;
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+            z-index: 1;
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            padding: 36px 0 28px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 32px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .back-btn,
+        .repo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-main);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .back-btn:hover,
+        .repo-badge:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+        }
+
+        .header-title-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .header-icon {
+            font-size: 2.2rem;
+            line-height: 1;
+            padding: 12px;
+            border-radius: 16px;
+            background: rgba(0, 255, 170, 0.1);
+            border: 1px solid rgba(0, 255, 170, 0.25);
+        }
+
+        h1 {
+            font-size: 2.1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-green) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+            max-width: 840px;
+            line-height: 1.5;
+        }
+
+        .badge-male-only {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Layout Grid */
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 28px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 980px) {
+            .calculator-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.14);
+        }
+
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Unit Switcher */
+        .segmented-ctrl {
+            display: inline-flex;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+        }
+
+        .segmented-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .segmented-btn.active {
+            background: var(--accent-green);
+            color: #090d16;
+            box-shadow: 0 2px 10px rgba(0, 255, 170, 0.3);
+        }
+
+        /* Form Inputs */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .form-label span.hint {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px;
+            padding-right: 58px;
+            color: var(--text-main);
+            font-family: 'Fira Code', monospace;
+            font-size: 1.05rem;
+            font-weight: 500;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 3px rgba(0, 255, 170, 0.15);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .input-unit {
+            position: absolute;
+            right: 14px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            font-weight: 600;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+
+        .dual-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Presets */
+        .presets-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+            margin-bottom: 20px;
+        }
+
+        .preset-chip {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 500;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .preset-chip:hover {
+            background: rgba(0, 255, 170, 0.1);
+            border-color: rgba(0, 255, 170, 0.4);
+            color: var(--accent-green);
+        }
+
+        /* Measurement Tip Box */
+        .tip-box {
+            background: rgba(56, 189, 248, 0.07);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            margin-top: 20px;
+        }
+
+        .tip-box strong {
+            color: var(--accent-blue);
+        }
+
+        /* Results Card */
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .hero-result {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%);
+            border: 1px solid rgba(0, 255, 170, 0.3);
+            border-radius: 18px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-result::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(0, 255, 170, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+
+        .hero-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+        }
+
+        .hero-value-wrap {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .hero-value {
+            font-family: 'Fira Code', monospace;
+            font-size: 3.4rem;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--accent-green);
+            text-shadow: 0 0 25px rgba(0, 255, 170, 0.4);
+        }
+
+        .hero-unit {
+            font-size: 1.8rem;
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .category-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cat-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        /* Spectrum Bar */
+        .spectrum-wrapper {
+            margin: 20px 0 10px;
+        }
+
+        .spectrum-bar {
+            height: 12px;
+            border-radius: 999px;
+            background: linear-gradient(to right,
+                    var(--cat-essential) 0%,
+                    var(--cat-essential) 10%,
+                    var(--cat-athlete) 10%,
+                    var(--cat-athlete) 26%,
+                    var(--cat-fitness) 26%,
+                    var(--cat-fitness) 34%,
+                    var(--cat-average) 34%,
+                    var(--cat-average) 48%,
+                    var(--cat-obese) 48%,
+                    var(--cat-obese) 100%);
+            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .spectrum-indicator {
+            position: absolute;
+            top: -5px;
+            width: 6px;
+            height: 22px;
+            background: #ffffff;
+            border-radius: 3px;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px #ffffff, 0 2px 6px rgba(0, 0, 0, 0.8);
+            transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .spectrum-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin-top: 6px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .navy-standard-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 10px;
+            margin-top: 14px;
+            font-size: 0.85rem;
+        }
+
+        .navy-status-tag {
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.76rem;
+            letter-spacing: 0.04em;
+        }
+
+        .navy-pass {
+            background: rgba(0, 255, 170, 0.2);
+            color: var(--accent-green);
+            border: 1px solid rgba(0, 255, 170, 0.4);
+        }
+
+        .navy-fail {
+            background: rgba(244, 63, 94, 0.2);
+            color: var(--accent-rose);
+            border: 1px solid rgba(244, 63, 94, 0.4);
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+        }
+
+        .metric-card {
+            background: rgba(0, 0, 0, 0.28);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            transition: var(--transition);
+        }
+
+        .metric-card:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .metric-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+
+        .metric-val {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .metric-sub {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        /* Target BF% Goal Simulator */
+        .goal-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 16px 20px;
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .goal-title {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .goal-inputs-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .target-slider-wrap {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Range Slider Styling */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 999px;
+            outline: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 10px rgba(0, 255, 170, 0.7);
+            cursor: pointer;
+            transition: transform 0.15s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Dedicated Graph Section */
+        .graph-section {
+            margin-top: 10px;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 30px;
+            position: relative;
+        }
+
+        .graph-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .graph-title-group h2 {
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .graph-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            max-width: 700px;
+            line-height: 1.45;
+        }
+
+        .graph-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Weight Slider Control Box */
+        .weight-slider-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 170, 0.25);
+            border-radius: 16px;
+            padding: 18px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .slider-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .slider-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slider-desc {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .slider-action-wrap {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            min-width: 280px;
+            max-width: 600px;
+        }
+
+        .weight-val-badge {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-green);
+            background: rgba(0, 255, 170, 0.1);
+            border: 1px solid rgba(0, 255, 170, 0.3);
+            padding: 6px 14px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+
+        .weight-delta-badge {
+            font-size: 0.78rem;
+            font-family: 'Fira Code', monospace;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .reset-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: var(--text-main);
+        }
+
+        /* Canvas Chart Wrapper */
+        .chart-container-box {
+            position: relative;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 16px;
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #heatmapCanvas {
+            width: 100%;
+            height: 480px;
+            border-radius: 12px;
+            cursor: crosshair;
+            display: block;
+        }
+
+        #chartJsWrapper {
+            position: relative;
+            width: 100%;
+            height: 480px;
+            display: none;
+        }
+
+        /* Floating HUD Tooltip for 2D Heatmap */
+        .canvas-hud {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 255, 170, 0.35);
+            border-radius: 14px;
+            padding: 14px 18px;
+            font-size: 0.82rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 10;
+            max-width: 290px;
+        }
+
+        .hud-title {
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 6px;
+        }
+
+        .hud-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 14px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .hud-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hud-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .hud-val {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        /* Heatmap Legend Bar */
+        .heatmap-legend {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .legend-items {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .legend-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-color-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        /* Explanatory & Guide Section */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        @media (max-width: 900px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .guide-step {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(0, 255, 170, 0.15);
+            border: 1px solid rgba(0, 255, 170, 0.4);
+            color: var(--accent-green);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.85rem;
+        }
+
+        .step-content h4 {
+            font-size: 0.95rem;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .step-content p {
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        /* Standard Navy Table */
+        .standard-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 12px;
+        }
+
+        .standard-table th,
+        .standard-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            text-align: left;
+        }
+
+        .standard-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .standard-table td {
+            font-family: 'Fira Code', monospace;
+            color: var(--text-main);
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 50px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+
+        footer a {
+            color: var(--accent-green);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Ambient Background Lighting -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+
+    <div class="page-wrapper">
+        <!-- Header -->
+        <header>
+            <div class="header-top">
+                <a href="index.html" class="back-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Back to All Calculators
+                </a>
+                <span class="repo-badge">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                        </path>
+                    </svg>
+                    ahafidz/usage-cal
+                </span>
+            </div>
+
+            <div class="header-title-row">
+                <div class="header-icon">⚓</div>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                        <h1>Male US Navy Body Fat Calculator</h1>
+                        <span class="badge-male-only">Male Standard</span>
+                    </div>
+                    <p class="subtitle">
+                        Official circumference-based U.S. Navy body fat computation with real-time 2D Neck-over-Waist
+                        contour heatmap and dynamic weight sensitivity explorer (±20 kg / ±44 lbs).
+                    </p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Top Section: Calculator Inputs + Live Results Showcase -->
+        <main>
+            <div class="calculator-grid">
+                <!-- Inputs Column -->
+                <div class="card" id="inputCard">
+                    <div class="card-header-flex">
+                        <div class="card-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)"
+                                stroke-width="2">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                            Body Measurements
+                        </div>
+                        <div class="segmented-ctrl">
+                            <button type="button" class="segmented-btn active" id="unitMetricBtn"
+                                onclick="setUnitSystem('metric')">Metric</button>
+                            <button type="button" class="segmented-btn" id="unitUsBtn"
+                                onclick="setUnitSystem('us')">US Units</button>
+                        </div>
+                    </div>
+
+                    <!-- Presets -->
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <span class="form-label">Quick Anthropometric Presets</span>
+                        <div class="presets-bar">
+                            <button type="button" class="preset-chip" onclick="applyPreset('athletic')">⚡ Athletic (12%)</button>
+                            <button type="button" class="preset-chip" onclick="applyPreset('fitness')">🎯 Fitness (16%)</button>
+                            <button type="button" class="preset-chip" onclick="applyPreset('average')">👤 Average (20%)</button>
+                            <button type="button" class="preset-chip" onclick="applyPreset('heavy')">🏋️ Heavy Bulk (24%)</button>
+                        </div>
+                    </div>
+
+                    <!-- Age Input -->
+                    <div class="form-group">
+                        <label class="form-label" for="ageInput">
+                            Age
+                            <span class="hint">17 - 80 yrs</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="ageInput" class="form-input" value="40" min="17" max="100"
+                                oninput="onInputChange()">
+                            <span class="input-unit">YRS</span>
+                        </div>
+                    </div>
+
+                    <!-- Weight Input -->
+                    <div class="form-group">
+                        <label class="form-label" for="weightInput">
+                            Current Body Weight
+                            <span class="hint" id="weightHint">Total Mass</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="weightInput" class="form-input" value="90.0" step="0.1" min="30"
+                                max="250" oninput="onInputChange(true)">
+                            <span class="input-unit" id="weightUnitLabel">KG</span>
+                        </div>
+                    </div>
+
+                    <!-- Height Input -->
+                    <div class="form-group" id="heightMetricGroup">
+                        <label class="form-label" for="heightInput">
+                            Height
+                            <span class="hint">Without footwear</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="heightInput" class="form-input" value="165.0" step="0.5" min="120"
+                                max="240" oninput="onInputChange()">
+                            <span class="input-unit">CM</span>
+                        </div>
+                    </div>
+
+                    <!-- US Height Dual Inputs -->
+                    <div class="form-group" id="heightUsGroup" style="display: none;">
+                        <label class="form-label">
+                            Height
+                            <span class="hint">Feet & Inches</span>
+                        </label>
+                        <div class="dual-inputs">
+                            <div class="input-wrapper">
+                                <input type="number" id="heightFeetInput" class="form-input" value="5" min="3" max="8"
+                                    oninput="onInputChange()">
+                                <span class="input-unit">FT</span>
+                            </div>
+                            <div class="input-wrapper">
+                                <input type="number" id="heightInchesInput" class="form-input" value="5.0" step="0.5"
+                                    min="0" max="11.9" oninput="onInputChange()">
+                                <span class="input-unit">IN</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Neck Circumference Input -->
+                    <div class="form-group">
+                        <label class="form-label" for="neckInput">
+                            Neck Circumference
+                            <span class="hint">Below larynx / Adam's apple</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="neckInput" class="form-input" value="40.0" step="0.1" min="20"
+                                max="70" oninput="onInputChange()">
+                            <span class="input-unit" id="neckUnitLabel">CM</span>
+                        </div>
+                    </div>
+
+                    <!-- Waist Circumference Input -->
+                    <div class="form-group">
+                        <label class="form-label" for="waistInput">
+                            Waist Circumference
+                            <span class="hint">Navel level / belly button</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="waistInput" class="form-input" value="100.0" step="0.1" min="40"
+                                max="180" oninput="onInputChange()">
+                            <span class="input-unit" id="waistUnitLabel">CM</span>
+                        </div>
+                    </div>
+
+                    <!-- Measurement Helper Tip -->
+                    <div class="tip-box">
+                        <strong>Measuring Protocol:</strong> Measure neck horizontally just below the larynx, keeping
+                        the tape snug without compressing tissue. Measure waist horizontally at the navel level after a
+                        normal exhalation with arms relaxed at your sides.
+                    </div>
+                </div>
+
+                <!-- Live Results Column -->
+                <div class="results-container">
+                    <!-- Hero BF Card -->
+                    <div class="hero-result">
+                        <div class="hero-top-row">
+                            <div>
+                                <div class="hero-label">US Navy Estimated Body Fat</div>
+                                <div class="hero-value-wrap">
+                                    <span class="hero-value" id="bfResult">27.8</span>
+                                    <span class="hero-unit">%</span>
+                                </div>
+                            </div>
+                            <div class="category-pill" id="categoryBadge"
+                                style="background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); border-color: rgba(244, 63, 94, 0.4);">
+                                <span class="cat-dot"></span>
+                                <span id="categoryLabel">Obese</span>
+                            </div>
+                        </div>
+
+                        <!-- Spectrum Bar -->
+                        <div class="spectrum-wrapper">
+                            <div class="spectrum-bar">
+                                <div class="spectrum-indicator" id="spectrumNeedle" style="left: 60.0%;"></div>
+                            </div>
+                            <div class="spectrum-labels">
+                                <span>Essential (2-5%)</span>
+                                <span>Athletes (6-13%)</span>
+                                <span>Fitness (14-17%)</span>
+                                <span>Average (18-24%)</span>
+                                <span>Obese (25%+)</span>
+                            </div>
+                        </div>
+
+                        <!-- Navy Standard Pass/Fail Banner -->
+                        <div class="navy-standard-banner">
+                            <div>
+                                <span style="color: var(--text-muted); font-size: 0.8rem;">U.S. Navy Male Readiness
+                                    Standard:</span>
+                                <strong id="navyMaxLabel"
+                                    style="color: var(--text-main); margin-left: 6px;">26.0%</strong>
+                                <span style="color: var(--text-dim); font-size: 0.78rem;" id="navyAgeCohort">(Age
+                                    40+)</span>
+                            </div>
+                            <span class="navy-status-tag navy-fail" id="navyStatusBadge">EXCEEDS BY +1.8%</span>
+                        </div>
+                    </div>
+
+                    <!-- Metric Breakdown Grid -->
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-label">Fat Mass</div>
+                            <div class="metric-val" id="fatMassVal">25.1 <span
+                                    style="font-size: 0.85rem; color: var(--text-dim);">kg</span></div>
+                            <div class="metric-sub" id="fatMassSub">55.2 lbs of adipose tissue</div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-label">Lean Body Mass</div>
+                            <div class="metric-val" id="leanMassVal">64.9 <span
+                                    style="font-size: 0.85rem; color: var(--text-dim);">kg</span></div>
+                            <div class="metric-sub" id="leanMassSub">72.2% muscle, bone & water</div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-label">Body Mass Index (BMI)</div>
+                            <div class="metric-val" id="bmiVal">33.1 <span
+                                    style="font-size: 0.85rem; color: var(--text-dim);">kg/m²</span></div>
+                            <div class="metric-sub" id="bmiSub">Obese Class I Category</div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-label">Waist-to-Neck Diff</div>
+                            <div class="metric-val" id="diffVal">60.0 <span
+                                    style="font-size: 0.85rem; color: var(--text-dim);">cm</span></div>
+                            <div class="metric-sub" id="diffSub">Waist/Neck Ratio: 2.50</div>
+                        </div>
+                    </div>
+
+                    <!-- Goal / Target Body Fat Simulator -->
+                    <div class="goal-box">
+                        <div class="goal-header">
+                            <div class="goal-title">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <circle cx="12" cy="12" r="6"></circle>
+                                    <circle cx="12" cy="12" r="2"></circle>
+                                </svg>
+                                Target Body Fat & Fat Loss Projection
+                            </div>
+                            <span style="font-size: 0.82rem; color: var(--accent-blue); font-weight: 600;"
+                                id="goalStatus">0.0 kg to lose</span>
+                        </div>
+                        <div class="goal-inputs-row">
+                            <div class="target-slider-wrap">
+                                <label style="font-size: 0.82rem; color: var(--text-muted); white-space: nowrap;"
+                                    for="targetBfSlider">
+                                    Target BF%: <strong id="targetBfDisplay" style="color: var(--accent-green);">15.0%</strong>
+                                </label>
+                                <input type="range" id="targetBfSlider" min="6" max="30" step="0.5" value="15.0"
+                                    oninput="updateGoalProjection()">
+                            </div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
+                                Target Body Weight: <strong id="targetWeightDisplay" style="color: var(--text-main);">78.4
+                                    kg</strong>
+                                <span style="color: var(--text-dim); margin-left: 6px;">(Preserving 100% lean mass)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full Width Graph Section: Neck vs Waist Axis + Weight Slider (±20kg) -->
+            <div class="graph-section">
+                <div class="graph-header">
+                    <div class="graph-title-group">
+                        <h2>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)"
+                                stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="9" y1="21" x2="9" y2="9"></line>
+                            </svg>
+                            Interactive Neck vs. Waist Exploration Space
+                        </h2>
+                        <p class="graph-subtitle">
+                            Visualise your Navy Body Fat sensitivity across a 2D grid: <strong>Waist axis (±20 cm / ±10
+                                in)</strong> vs <strong>Neck axis (±10 cm / ±5 in)</strong>. Adjust the dynamic
+                            <strong>Weight Slider (±20 kg)</strong> to instantly reproject Fat Mass and Lean Mass.
+                        </p>
+                    </div>
+
+                    <div class="graph-controls">
+                        <!-- Graph View Mode -->
+                        <div class="segmented-ctrl">
+                            <button type="button" class="segmented-btn active" id="viewHeatmapBtn"
+                                onclick="switchGraphMode('heatmap')">2D Heatmap & Contours</button>
+                            <button type="button" class="segmented-btn" id="viewCurvesBtn"
+                                onclick="switchGraphMode('curves')">Multi-Neck Curves</button>
+                        </div>
+
+                        <!-- Data Display Mode -->
+                        <div class="segmented-ctrl">
+                            <button type="button" class="segmented-btn active" id="metricBfBtn"
+                                onclick="setGraphMetric('bf')">Body Fat %</button>
+                            <button type="button" class="segmented-btn" id="metricFatMassBtn"
+                                onclick="setGraphMetric('fatMass')">Fat Mass</button>
+                            <button type="button" class="segmented-btn" id="metricLeanMassBtn"
+                                onclick="setGraphMetric('leanMass')">Lean Mass</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weight Slider Control Bar -->
+                <div class="weight-slider-box">
+                    <div class="slider-meta">
+                        <div class="slider-title">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)"
+                                stroke-width="2">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <path d="M16 10a4 4 0 0 1-8 0"></path>
+                            </svg>
+                            Dynamic Weight Simulation Slider
+                        </div>
+                        <div class="slider-desc" id="sliderRangeDesc">
+                            Explore weight variance ±20 kg (±44 lbs) from entered baseline
+                        </div>
+                    </div>
+
+                    <div class="slider-action-wrap">
+                        <input type="range" id="weightSlider" min="70" max="110" step="0.2" value="90"
+                            oninput="onWeightSliderChange(this.value)">
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <span class="weight-val-badge" id="sliderWeightBadge">90.0 kg</span>
+                            <span class="weight-delta-badge" id="sliderDeltaBadge">±0.0 kg from baseline</span>
+                        </div>
+                    </div>
+
+                    <button type="button" class="reset-btn" onclick="resetWeightSlider()">
+                        ↺ Reset to Entered Weight
+                    </button>
+                </div>
+
+                <!-- Graph Canvas / Chart Container -->
+                <div class="chart-container-box">
+                    <!-- 2D Canvas Heatmap & Contour Plot -->
+                    <canvas id="heatmapCanvas"></canvas>
+
+                    <!-- Chart.js Sensitivity Line Chart Wrapper -->
+                    <div id="chartJsWrapper">
+                        <canvas id="curvesChart"></canvas>
+                    </div>
+
+                    <!-- Floating Interactive HUD Tooltip for 2D Heatmap -->
+                    <div class="canvas-hud" id="canvasHud" style="opacity: 0;">
+                        <div class="hud-title">
+                            <span>Inspection Coordinate</span>
+                            <span id="hudBadge"
+                                style="font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; background: rgba(0,255,170,0.2); color: var(--accent-green);">Current</span>
+                        </div>
+                        <div class="hud-grid">
+                            <div class="hud-item">
+                                <span class="hud-label">Waist</span>
+                                <span class="hud-val" id="hudWaist">100.0 cm</span>
+                            </div>
+                            <div class="hud-item">
+                                <span class="hud-label">Neck</span>
+                                <span class="hud-val" id="hudNeck">40.0 cm</span>
+                            </div>
+                            <div class="hud-item">
+                                <span class="hud-label">Body Fat %</span>
+                                <span class="hud-val" id="hudBf">27.8%</span>
+                            </div>
+                            <div class="hud-item">
+                                <span class="hud-label">Category</span>
+                                <span class="hud-val" id="hudCat" style="color: var(--accent-rose);">Obese</span>
+                            </div>
+                            <div class="hud-item">
+                                <span class="hud-label">Simulated Fat Mass</span>
+                                <span class="hud-val" id="hudFatMass">25.1 kg</span>
+                            </div>
+                            <div class="hud-item">
+                                <span class="hud-label">Simulated Lean Mass</span>
+                                <span class="hud-val" id="hudLeanMass">64.9 kg</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Heatmap Color Legend -->
+                <div class="heatmap-legend">
+                    <div class="legend-items">
+                        <span style="font-weight: 600; color: var(--text-main);">Body Fat Legend:</span>
+                        <div class="legend-tag">
+                            <span class="legend-color-box" style="background: var(--cat-essential);"></span>
+                            <span>Essential (&lt; 6%)</span>
+                        </div>
+                        <div class="legend-tag">
+                            <span class="legend-color-box" style="background: var(--cat-athlete);"></span>
+                            <span>Athletes (6 - 13%)</span>
+                        </div>
+                        <div class="legend-tag">
+                            <span class="legend-color-box" style="background: var(--cat-fitness);"></span>
+                            <span>Fitness (14 - 17%)</span>
+                        </div>
+                        <div class="legend-tag">
+                            <span class="legend-color-box" style="background: var(--cat-average);"></span>
+                            <span>Average (18 - 24%)</span>
+                        </div>
+                        <div class="legend-tag">
+                            <span class="legend-color-box" style="background: var(--cat-obese);"></span>
+                            <span>Obese (&ge; 25%)</span>
+                        </div>
+                    </div>
+                    <div style="font-family: 'Fira Code', monospace; font-size: 0.75rem; color: var(--text-dim);">
+                        Target Crosshair ✛ marks your exact entered baseline
+                    </div>
+                </div>
+            </div>
+
+            <!-- Educational & Standard Specifications Section -->
+            <div class="info-grid">
+                <!-- Military Standards & Categorization -->
+                <div class="card">
+                    <div class="card-title" style="margin-bottom: 14px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)"
+                            stroke-width="2">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                        Department of Defense & Navy Standards
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px;">
+                        The U.S. Navy enforces strict age-graded body fat maximums for male service members to ensure
+                        operational readiness and cardiovascular endurance:
+                    </p>
+                    <table class="standard-table">
+                        <thead>
+                            <tr>
+                                <th>Age Bracket</th>
+                                <th>Navy Maximum BF%</th>
+                                <th>DoD Standard Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>17 – 21 yrs</td>
+                                <td>22.0%</td>
+                                <td>Pass / Retention Standard</td>
+                            </tr>
+                            <tr>
+                                <td>22 – 29 yrs</td>
+                                <td>23.0%</td>
+                                <td>Pass / Retention Standard</td>
+                            </tr>
+                            <tr>
+                                <td>30 – 39 yrs</td>
+                                <td>24.0%</td>
+                                <td>Pass / Retention Standard</td>
+                            </tr>
+                            <tr>
+                                <td>40+ yrs</td>
+                                <td>26.0%</td>
+                                <td>Pass / Retention Standard</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Scientific Method & Equations -->
+                <div class="card">
+                    <div class="card-title" style="margin-bottom: 14px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-purple)"
+                            stroke-width="2">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                        </svg>
+                        The Male U.S. Navy Circumference Formula
+                    </div>
+                    <div class="guide-step">
+                        <div class="step-num">1</div>
+                        <div class="step-content">
+                            <h4>Metric Formulation (Hodgdon & Beckett)</h4>
+                            <p style="font-family: 'Fira Code', monospace; font-size: 0.78rem; color: var(--accent-green); margin-top: 4px;">
+                                BF% = 495 / (1.0324 - 0.19077·log₁₀(Waist - Neck) + 0.15456·log₁₀(Height)) - 450
+                            </p>
+                        </div>
+                    </div>
+                    <div class="guide-step">
+                        <div class="step-num">2</div>
+                        <div class="step-content">
+                            <h4>Why Neck Circumference Matters</h4>
+                            <p>
+                                The neck serves as a skeletal and lean tissue surrogate. An increase in neck thickness
+                                with identical waist circumference signals higher muscularity and bone structure,
+                                decreasing the calculated body fat percentage.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="guide-step">
+                        <div class="step-num">3</div>
+                        <div class="step-content">
+                            <h4>Waist-to-Neck Ratio Insight</h4>
+                            <p>
+                                Abdominal adipose stores track strongly with the waist-to-neck differential. Reducing
+                                waist circumference through caloric restriction while preserving neck mass through neck
+                                and trap hypertrophy optimizes the Navy body composition score.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>
+                Male US Navy Body Fat Calculator • <a href="index.html">Web Applications Directory</a> • Part of the
+                <a href="https://github.com/ahafidz/usage-cal" target="_blank" rel="noopener noreferrer">ahafidz/usage-cal</a> repository.
+            </p>
+        </footer>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        /* ==========================================================
+           STATE & CONFIGURATION
+           ========================================================== */
+        let state = {
+            unitSystem: 'metric', // 'metric' or 'us'
+            age: 40,
+            weightKg: 90.0,
+            heightCm: 165.0,
+            neckCm: 40.0,
+            waistCm: 100.0,
+            simulatedWeightKg: 90.0,
+            targetBf: 15.0,
+            graphMode: 'heatmap', // 'heatmap' or 'curves'
+            graphMetric: 'bf', // 'bf', 'fatMass', or 'leanMass'
+            hoverCoord: null, // { waist, neck, bf, fatMass, leanMass }
+            pinnedCoord: null
+        };
+
+        let chartInstance = null;
+        let heatmapAnimFrame = null;
+        let pulsePhase = 0;
+
+        /* Conversion Constants */
+        const IN_TO_CM = 2.54;
+        const CM_TO_IN = 1 / 2.54;
+        const LB_TO_KG = 0.45359237;
+        const KG_TO_LB = 2.20462262;
+
+        /* ==========================================================
+           INITIALIZATION
+           ========================================================== */
+        window.addEventListener('DOMContentLoaded', () => {
+            initInputsFromState();
+            recalcAll();
+            initHeatmapCanvas();
+            animatePulse();
+            window.addEventListener('resize', () => {
+                renderGraph();
+            });
+        });
+
+        /* ==========================================================
+           MATHEMATICAL FORMULAS (U.S. Navy Male Standard)
+           ========================================================== */
+        function computeNavyBodyFat(waistCm, neckCm, heightCm) {
+            const diff = waistCm - neckCm;
+            if (diff <= 0 || heightCm <= 0) return 0;
+            // Male DoD / Navy formula:
+            // BFP = 495 / (1.0324 - 0.19077 * log10(waist - neck) + 0.15456 * log10(height)) - 450
+            const logDiff = Math.log10(diff);
+            const logHeight = Math.log10(heightCm);
+            const denom = 1.0324 - (0.19077 * logDiff) + (0.15456 * logHeight);
+            if (denom <= 0) return 0;
+            let bfp = (495 / denom) - 450;
+            // Physical boundaries
+            return Math.max(2.0, Math.min(65.0, bfp));
+        }
+
+        function getBfCategory(bfp) {
+            if (bfp < 6.0) return { name: 'Essential Fat', color: '#0284c7', class: 'cat-essential', min: 2, max: 6 };
+            if (bfp < 14.0) return { name: 'Athletes', color: '#10b981', class: 'cat-athlete', min: 6, max: 14 };
+            if (bfp < 18.0) return { name: 'Fitness', color: '#00ffaa', class: 'cat-fitness', min: 14, max: 18 };
+            if (bfp < 25.0) return { name: 'Average', color: '#f59e0b', class: 'cat-average', min: 18, max: 25 };
+            return { name: 'Obese', color: '#f43f5e', class: 'cat-obese', min: 25, max: 50 };
+        }
+
+        function getNavyMaxByAge(age) {
+            if (age <= 21) return { max: 22.0, cohort: '(Age 17-21)' };
+            if (age <= 29) return { max: 23.0, cohort: '(Age 22-29)' };
+            if (age <= 39) return { max: 24.0, cohort: '(Age 30-39)' };
+            return { max: 26.0, cohort: '(Age 40+)' };
+        }
+
+        /* ==========================================================
+           UNIT SWITCHING & INPUT SYNC
+           ========================================================== */
+        function setUnitSystem(system) {
+            if (state.unitSystem === system) return;
+            state.unitSystem = system;
+
+            document.getElementById('unitMetricBtn').classList.toggle('active', system === 'metric');
+            document.getElementById('unitUsBtn').classList.toggle('active', system === 'us');
+
+            if (system === 'metric') {
+                document.getElementById('heightMetricGroup').style.display = 'block';
+                document.getElementById('heightUsGroup').style.display = 'none';
+                document.getElementById('weightUnitLabel').innerText = 'KG';
+                document.getElementById('neckUnitLabel').innerText = 'CM';
+                document.getElementById('waistUnitLabel').innerText = 'CM';
+                document.getElementById('weightHint').innerText = 'Total Mass';
+            } else {
+                document.getElementById('heightMetricGroup').style.display = 'none';
+                document.getElementById('heightUsGroup').style.display = 'block';
+                document.getElementById('weightUnitLabel').innerText = 'LBS';
+                document.getElementById('neckUnitLabel').innerText = 'IN';
+                document.getElementById('waistUnitLabel').innerText = 'IN';
+                document.getElementById('weightHint').innerText = 'Total Weight';
+            }
+
+            initInputsFromState();
+            syncWeightSliderLimits();
+            recalcAll();
+        }
+
+        function initInputsFromState() {
+            document.getElementById('ageInput').value = state.age;
+
+            if (state.unitSystem === 'metric') {
+                document.getElementById('weightInput').value = state.weightKg.toFixed(1);
+                document.getElementById('heightInput').value = state.heightCm.toFixed(1);
+                document.getElementById('neckInput').value = state.neckCm.toFixed(1);
+                document.getElementById('waistInput').value = state.waistCm.toFixed(1);
+            } else {
+                const weightLbs = state.weightKg * KG_TO_LB;
+                document.getElementById('weightInput').value = weightLbs.toFixed(1);
+
+                const totalInches = state.heightCm * CM_TO_IN;
+                const feet = Math.floor(totalInches / 12);
+                const inches = totalInches % 12;
+                document.getElementById('heightFeetInput').value = feet;
+                document.getElementById('heightInchesInput').value = inches.toFixed(1);
+
+                document.getElementById('neckInput').value = (state.neckCm * CM_TO_IN).toFixed(1);
+                document.getElementById('waistInput').value = (state.waistCm * CM_TO_IN).toFixed(1);
+            }
+        }
+
+        function onInputChange(weightChanged = false) {
+            state.age = Math.max(17, Math.min(100, parseFloat(document.getElementById('ageInput').value) || 28));
+
+            if (state.unitSystem === 'metric') {
+                state.weightKg = Math.max(30, Math.min(250, parseFloat(document.getElementById('weightInput').value) || 80));
+                state.heightCm = Math.max(100, Math.min(250, parseFloat(document.getElementById('heightInput').value) || 178));
+                state.neckCm = Math.max(20, Math.min(70, parseFloat(document.getElementById('neckInput').value) || 39));
+                state.waistCm = Math.max(40, Math.min(180, parseFloat(document.getElementById('waistInput').value) || 88));
+            } else {
+                const lbs = parseFloat(document.getElementById('weightInput').value) || 176.4;
+                state.weightKg = Math.max(30, Math.min(250, lbs * LB_TO_KG));
+
+                const feet = parseFloat(document.getElementById('heightFeetInput').value) || 5;
+                const inches = parseFloat(document.getElementById('heightInchesInput').value) || 10;
+                state.heightCm = Math.max(100, Math.min(250, (feet * 12 + inches) * IN_TO_CM));
+
+                const neckIn = parseFloat(document.getElementById('neckInput').value) || 15.4;
+                state.neckCm = Math.max(20, Math.min(70, neckIn * IN_TO_CM));
+
+                const waistIn = parseFloat(document.getElementById('waistInput').value) || 34.6;
+                state.waistCm = Math.max(40, Math.min(180, waistIn * IN_TO_CM));
+            }
+
+            if (weightChanged) {
+                state.simulatedWeightKg = state.weightKg;
+                syncWeightSliderLimits();
+            }
+
+            recalcAll();
+        }
+
+        function applyPreset(presetKey) {
+            if (presetKey === 'athletic') {
+                state.weightKg = 75.0;
+                state.heightCm = 180.0;
+                state.neckCm = 40.0;
+                state.waistCm = 78.0;
+            } else if (presetKey === 'fitness') {
+                state.weightKg = 80.0;
+                state.heightCm = 178.0;
+                state.neckCm = 39.0;
+                state.waistCm = 85.0;
+            } else if (presetKey === 'average') {
+                state.weightKg = 83.0;
+                state.heightCm = 177.0;
+                state.neckCm = 38.5;
+                state.waistCm = 92.0;
+            } else if (presetKey === 'heavy') {
+                state.weightKg = 94.0;
+                state.heightCm = 182.0;
+                state.neckCm = 42.0;
+                state.waistCm = 100.0;
+            }
+            state.simulatedWeightKg = state.weightKg;
+            initInputsFromState();
+            syncWeightSliderLimits();
+            recalcAll();
+        }
+
+        /* ==========================================================
+           WEIGHT SLIDER SETUP (±20 KG / ±44 LBS)
+           ========================================================== */
+        function syncWeightSliderLimits() {
+            const slider = document.getElementById('weightSlider');
+            if (state.unitSystem === 'metric') {
+                const minKg = Math.max(20, state.weightKg - 20);
+                const maxKg = state.weightKg + 20;
+                slider.min = minKg.toFixed(1);
+                slider.max = maxKg.toFixed(1);
+                slider.step = "0.2";
+                slider.value = state.simulatedWeightKg.toFixed(1);
+
+                document.getElementById('sliderRangeDesc').innerText =
+                    `Adjust weight between ${minKg.toFixed(1)} kg and ${maxKg.toFixed(1)} kg (±20 kg around baseline ${state.weightKg.toFixed(1)} kg)`;
+            } else {
+                const baselineLbs = state.weightKg * KG_TO_LB;
+                const minLbs = Math.max(44, baselineLbs - 44);
+                const maxLbs = baselineLbs + 44;
+                slider.min = minLbs.toFixed(1);
+                slider.max = maxLbs.toFixed(1);
+                slider.step = "0.5";
+                slider.value = (state.simulatedWeightKg * KG_TO_LB).toFixed(1);
+
+                document.getElementById('sliderRangeDesc').innerText =
+                    `Adjust weight between ${minLbs.toFixed(1)} lbs and ${maxLbs.toFixed(1)} lbs (±44 lbs around baseline ${baselineLbs.toFixed(1)} lbs)`;
+            }
+            updateSliderDisplay();
+        }
+
+        function onWeightSliderChange(val) {
+            const num = parseFloat(val);
+            if (state.unitSystem === 'metric') {
+                state.simulatedWeightKg = num;
+            } else {
+                state.simulatedWeightKg = num * LB_TO_KG;
+            }
+            updateSliderDisplay();
+            renderGraph();
+            updateGoalProjection();
+        }
+
+        function resetWeightSlider() {
+            state.simulatedWeightKg = state.weightKg;
+            syncWeightSliderLimits();
+            renderGraph();
+            updateGoalProjection();
+        }
+
+        function updateSliderDisplay() {
+            const badge = document.getElementById('sliderWeightBadge');
+            const deltaBadge = document.getElementById('sliderDeltaBadge');
+
+            if (state.unitSystem === 'metric') {
+                badge.innerText = `${state.simulatedWeightKg.toFixed(1)} kg`;
+                const delta = state.simulatedWeightKg - state.weightKg;
+                const sign = delta > 0 ? '+' : '';
+                deltaBadge.innerText = `${sign}${delta.toFixed(1)} kg from baseline`;
+            } else {
+                const currentLbs = state.simulatedWeightKg * KG_TO_LB;
+                const baseLbs = state.weightKg * KG_TO_LB;
+                badge.innerText = `${currentLbs.toFixed(1)} lbs`;
+                const delta = currentLbs - baseLbs;
+                const sign = delta > 0 ? '+' : '';
+                deltaBadge.innerText = `${sign}${delta.toFixed(1)} lbs from baseline`;
+            }
+        }
+
+        /* ==========================================================
+           RECALCULATE ALL OUTPUTS
+           ========================================================== */
+        function recalcAll() {
+            const bfp = computeNavyBodyFat(state.waistCm, state.neckCm, state.heightCm);
+            const cat = getBfCategory(bfp);
+            const navyStd = getNavyMaxByAge(state.age);
+
+            // 1. Hero BF
+            document.getElementById('bfResult').innerText = bfp.toFixed(1);
+            const catBadge = document.getElementById('categoryBadge');
+            catBadge.style.background = `${cat.color}22`;
+            catBadge.style.color = cat.color;
+            catBadge.style.borderColor = `${cat.color}66`;
+            document.getElementById('categoryLabel').innerText = cat.name;
+
+            // 2. Spectrum needle (mapped from 2% to 45%)
+            const percentPos = Math.max(0, Math.min(100, ((bfp - 2) / (45 - 2)) * 100));
+            document.getElementById('spectrumNeedle').style.left = `${percentPos}%`;
+
+            // 3. Navy Standard
+            document.getElementById('navyMaxLabel').innerText = `${navyStd.max.toFixed(1)}%`;
+            document.getElementById('navyAgeCohort').innerText = navyStd.cohort;
+            const statusTag = document.getElementById('navyStatusBadge');
+            if (bfp <= navyStd.max) {
+                statusTag.innerText = 'PASS - WITHIN NAVY STANDARDS';
+                statusTag.className = 'navy-status-tag navy-pass';
+            } else {
+                const excess = (bfp - navyStd.max).toFixed(1);
+                statusTag.innerText = `EXCEEDS BY +${excess}%`;
+                statusTag.className = 'navy-status-tag navy-fail';
+            }
+
+            // 4. Metric Breakdown
+            const fatMassKg = state.weightKg * (bfp / 100);
+            const leanMassKg = state.weightKg - fatMassKg;
+            const bmi = state.weightKg / Math.pow(state.heightCm / 100, 2);
+            const waistNeckDiffCm = state.waistCm - state.neckCm;
+            const wnr = (state.waistCm / state.neckCm).toFixed(2);
+
+            if (state.unitSystem === 'metric') {
+                document.getElementById('fatMassVal').innerHTML = `${fatMassKg.toFixed(1)} <span style="font-size:0.85rem; color:var(--text-dim);">kg</span>`;
+                document.getElementById('fatMassSub').innerText = `${(fatMassKg * KG_TO_LB).toFixed(1)} lbs adipose tissue`;
+
+                document.getElementById('leanMassVal').innerHTML = `${leanMassKg.toFixed(1)} <span style="font-size:0.85rem; color:var(--text-dim);">kg</span>`;
+                document.getElementById('leanMassSub').innerText = `${((leanMassKg / state.weightKg) * 100).toFixed(1)}% skeletal & lean mass`;
+
+                document.getElementById('diffVal').innerHTML = `${waistNeckDiffCm.toFixed(1)} <span style="font-size:0.85rem; color:var(--text-dim);">cm</span>`;
+                document.getElementById('diffSub').innerText = `Waist/Neck Ratio: ${wnr}`;
+            } else {
+                const fatMassLbs = fatMassKg * KG_TO_LB;
+                const leanMassLbs = leanMassKg * KG_TO_LB;
+                const diffInches = waistNeckDiffCm * CM_TO_IN;
+
+                document.getElementById('fatMassVal').innerHTML = `${fatMassLbs.toFixed(1)} <span style="font-size:0.85rem; color:var(--text-dim);">lbs</span>`;
+                document.getElementById('fatMassSub').innerText = `${fatMassKg.toFixed(1)} kg adipose tissue`;
+
+                document.getElementById('leanMassVal').innerHTML = `${leanMassLbs.toFixed(1)} <span style="font-size:0.85rem; color:var(--text-dim);">lbs</span>`;
+                document.getElementById('leanMassSub').innerText = `${((leanMassKg / state.weightKg) * 100).toFixed(1)}% skeletal & lean mass`;
+
+                document.getElementById('diffVal').innerHTML = `${diffInches.toFixed(1)} <span style="font-size:0.85rem; color:var(--text-dim);">in</span>`;
+                document.getElementById('diffSub').innerText = `Waist/Neck Ratio: ${wnr}`;
+            }
+
+            // BMI Category
+            document.getElementById('bmiVal').innerHTML = `${bmi.toFixed(1)} <span style="font-size:0.85rem; color:var(--text-dim);">kg/m²</span>`;
+            let bmiCategory = 'Normal Weight';
+            if (bmi < 18.5) bmiCategory = 'Underweight';
+            else if (bmi >= 30) bmiCategory = 'Obese Class';
+            else if (bmi >= 25) bmiCategory = 'Overweight';
+            document.getElementById('bmiSub').innerText = `${bmiCategory} (Standard WHO)`;
+
+            // 5. Goal Projection
+            updateGoalProjection();
+
+            // 6. Redraw Active Graph
+            renderGraph();
+        }
+
+        /* Goal Simulator */
+        function updateGoalProjection() {
+            const targetBf = parseFloat(document.getElementById('targetBfSlider').value);
+            state.targetBf = targetBf;
+            document.getElementById('targetBfDisplay').innerText = `${targetBf.toFixed(1)}%`;
+
+            const currentBf = computeNavyBodyFat(state.waistCm, state.neckCm, state.heightCm);
+            // Lean Body Mass of SIMULATED weight or BASE weight
+            const activeWeightKg = state.simulatedWeightKg;
+            const currentFatMassKg = activeWeightKg * (currentBf / 100);
+            const currentLeanMassKg = activeWeightKg - currentFatMassKg;
+
+            // Target weight assuming 100% lean mass is preserved:
+            // TargetWeight = LeanMass / (1 - TargetBF%)
+            const targetWeightKg = currentLeanMassKg / (1 - (targetBf / 100));
+            const fatDiffKg = activeWeightKg - targetWeightKg;
+
+            if (state.unitSystem === 'metric') {
+                document.getElementById('targetWeightDisplay').innerText = `${targetWeightKg.toFixed(1)} kg`;
+                const goalStatus = document.getElementById('goalStatus');
+                if (fatDiffKg > 0.05) {
+                    goalStatus.innerText = `Lose ${fatDiffKg.toFixed(1)} kg of fat`;
+                    goalStatus.style.color = 'var(--accent-green)';
+                } else if (fatDiffKg < -0.05) {
+                    goalStatus.innerText = `Gain ${Math.abs(fatDiffKg).toFixed(1)} kg of mass`;
+                    goalStatus.style.color = 'var(--accent-blue)';
+                } else {
+                    goalStatus.innerText = `Goal reached! Maintain weight`;
+                    goalStatus.style.color = 'var(--accent-green)';
+                }
+            } else {
+                const targetWeightLbs = targetWeightKg * KG_TO_LB;
+                const fatDiffLbs = fatDiffKg * KG_TO_LB;
+                document.getElementById('targetWeightDisplay').innerText = `${targetWeightLbs.toFixed(1)} lbs`;
+                const goalStatus = document.getElementById('goalStatus');
+                if (fatDiffLbs > 0.1) {
+                    goalStatus.innerText = `Lose ${fatDiffLbs.toFixed(1)} lbs of fat`;
+                    goalStatus.style.color = 'var(--accent-green)';
+                } else if (fatDiffLbs < -0.1) {
+                    goalStatus.innerText = `Gain ${Math.abs(fatDiffLbs).toFixed(1)} lbs of mass`;
+                    goalStatus.style.color = 'var(--accent-blue)';
+                } else {
+                    goalStatus.innerText = `Goal reached! Maintain weight`;
+                    goalStatus.style.color = 'var(--accent-green)';
+                }
+            }
+        }
+
+        /* ==========================================================
+           GRAPH MODE & METRIC CONTROLS
+           ========================================================== */
+        function switchGraphMode(mode) {
+            state.graphMode = mode;
+            document.getElementById('viewHeatmapBtn').classList.toggle('active', mode === 'heatmap');
+            document.getElementById('viewCurvesBtn').classList.toggle('active', mode === 'curves');
+
+            const canvas = document.getElementById('heatmapCanvas');
+            const chartJsWrapper = document.getElementById('chartJsWrapper');
+            const hud = document.getElementById('canvasHud');
+
+            if (mode === 'heatmap') {
+                canvas.style.display = 'block';
+                chartJsWrapper.style.display = 'none';
+            } else {
+                canvas.style.display = 'none';
+                hud.style.opacity = 0;
+                chartJsWrapper.style.display = 'block';
+            }
+            renderGraph();
+        }
+
+        function setGraphMetric(metric) {
+            state.graphMetric = metric;
+            document.getElementById('metricBfBtn').classList.toggle('active', metric === 'bf');
+            document.getElementById('metricFatMassBtn').classList.toggle('active', metric === 'fatMass');
+            document.getElementById('metricLeanMassBtn').classList.toggle('active', metric === 'leanMass');
+            renderGraph();
+        }
+
+        function renderGraph() {
+            if (state.graphMode === 'heatmap') {
+                drawHeatmap();
+            } else {
+                renderCurvesChart();
+            }
+        }
+
+        /* ==========================================================
+           2D CONTOUR & HEATMAP CANVAS ENGINE
+           ========================================================== */
+        let canvasElem, ctx;
+
+        function initHeatmapCanvas() {
+            canvasElem = document.getElementById('heatmapCanvas');
+            ctx = canvasElem.getContext('2d');
+
+            canvasElem.addEventListener('mousemove', onCanvasMouseMove);
+            canvasElem.addEventListener('mouseleave', () => {
+                state.hoverCoord = null;
+                const hud = document.getElementById('canvasHud');
+                hud.style.opacity = 0;
+            });
+            canvasElem.addEventListener('click', onCanvasClick);
+        }
+
+        function onCanvasMouseMove(e) {
+            const rect = canvasElem.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Dimensions and Axis Margins
+            const padLeft = 70;
+            const padRight = 30;
+            const padTop = 30;
+            const padBottom = 55;
+            const plotW = rect.width - padLeft - padRight;
+            const plotH = rect.height - padTop - padBottom;
+
+            if (mouseX < padLeft || mouseX > padLeft + plotW || mouseY < padTop || mouseY > padTop + plotH) {
+                state.hoverCoord = null;
+                document.getElementById('canvasHud').style.opacity = 0;
+                return;
+            }
+
+            // Axis Ranges:
+            // Neck axis (Y-axis): ±10 cm (or ±5 in)
+            // Waist axis (X-axis): ±20 cm (or ±10 in)
+            const isMetric = state.unitSystem === 'metric';
+            const waistDelta = isMetric ? 20.0 : (10.0 * IN_TO_CM);
+            const neckDelta = isMetric ? 10.0 : (5.0 * IN_TO_CM);
+
+            const minWaist = state.waistCm - waistDelta;
+            const maxWaist = state.waistCm + waistDelta;
+            const minNeck = state.neckCm - neckDelta;
+            const maxNeck = state.neckCm + neckDelta;
+
+            // Normalized 0 to 1
+            const u = (mouseX - padLeft) / plotW;
+            const v = 1 - ((mouseY - padTop) / plotH); // Invert Y (higher neck at top)
+
+            const waistCm = minWaist + (u * (maxWaist - minWaist));
+            const neckCm = minNeck + (v * (maxNeck - minNeck));
+
+            const bfp = computeNavyBodyFat(waistCm, neckCm, state.heightCm);
+            const fatMassKg = state.simulatedWeightKg * (bfp / 100);
+            const leanMassKg = state.simulatedWeightKg - fatMassKg;
+            const cat = getBfCategory(bfp);
+
+            state.hoverCoord = {
+                x: mouseX,
+                y: mouseY,
+                waistCm,
+                neckCm,
+                bfp,
+                fatMassKg,
+                leanMassKg,
+                cat
+            };
+
+            // Update HUD
+            const hud = document.getElementById('canvasHud');
+            hud.style.opacity = 1;
+
+            if (isMetric) {
+                document.getElementById('hudWaist').innerText = `${waistCm.toFixed(1)} cm`;
+                document.getElementById('hudNeck').innerText = `${neckCm.toFixed(1)} cm`;
+                document.getElementById('hudFatMass').innerText = `${fatMassKg.toFixed(1)} kg`;
+                document.getElementById('hudLeanMass').innerText = `${leanMassKg.toFixed(1)} kg`;
+            } else {
+                document.getElementById('hudWaist').innerText = `${(waistCm * CM_TO_IN).toFixed(1)} in`;
+                document.getElementById('hudNeck').innerText = `${(neckCm * CM_TO_IN).toFixed(1)} in`;
+                document.getElementById('hudFatMass').innerText = `${(fatMassKg * KG_TO_LB).toFixed(1)} lbs`;
+                document.getElementById('hudLeanMass').innerText = `${(leanMassKg * KG_TO_LB).toFixed(1)} lbs`;
+            }
+
+            document.getElementById('hudBf').innerText = `${bfp.toFixed(1)}%`;
+            const hudCat = document.getElementById('hudCat');
+            hudCat.innerText = cat.name;
+            hudCat.style.color = cat.color;
+
+            // Check if near baseline
+            const distBase = Math.hypot(waistCm - state.waistCm, neckCm - state.neckCm);
+            const hudBadge = document.getElementById('hudBadge');
+            if (distBase < 0.6) {
+                hudBadge.innerText = 'Current Entered Point';
+                hudBadge.style.color = 'var(--accent-green)';
+            } else {
+                hudBadge.innerText = 'What-if Coordinate';
+                hudBadge.style.color = 'var(--accent-blue)';
+            }
+        }
+
+        function onCanvasClick(e) {
+            if (state.hoverCoord) {
+                // Pin / test new values if desired or log
+            }
+        }
+
+        function animatePulse() {
+            pulsePhase += 0.05;
+            if (state.graphMode === 'heatmap') {
+                drawHeatmap();
+            }
+            heatmapAnimFrame = requestAnimationFrame(animatePulse);
+        }
+
+        function drawHeatmap() {
+            if (!canvasElem || !ctx) return;
+
+            // Handle HiDPI
+            const rect = canvasElem.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvasElem.width = rect.width * dpr;
+            canvasElem.height = rect.height * dpr;
+            ctx.resetTransform();
+            ctx.scale(dpr, dpr);
+
+            const width = rect.width;
+            const height = rect.height;
+
+            // Padding
+            const padLeft = 70;
+            const padRight = 30;
+            const padTop = 30;
+            const padBottom = 55;
+            const plotW = width - padLeft - padRight;
+            const plotH = height - padTop - padBottom;
+
+            // Background
+            ctx.fillStyle = '#0c121e';
+            ctx.fillRect(0, 0, width, height);
+
+            // Compute Axis Bounds
+            const isMetric = state.unitSystem === 'metric';
+            const waistDelta = isMetric ? 20.0 : (10.0 * IN_TO_CM);
+            const neckDelta = isMetric ? 10.0 : (5.0 * IN_TO_CM);
+
+            const minWaist = state.waistCm - waistDelta;
+            const maxWaist = state.waistCm + waistDelta;
+            const minNeck = state.neckCm - neckDelta;
+            const maxNeck = state.neckCm + neckDelta;
+
+            // Render Heatmap Matrix Grid Cells
+            const nx = 48; // Horizontal resolution
+            const ny = 32; // Vertical resolution
+            const cellW = plotW / nx;
+            const cellH = plotH / ny;
+
+            for (let i = 0; i < nx; i++) {
+                const u = (i + 0.5) / nx;
+                const waist = minWaist + (u * (maxWaist - minWaist));
+
+                for (let j = 0; j < ny; j++) {
+                    const v = (j + 0.5) / ny;
+                    const neck = maxNeck - (v * (maxNeck - minNeck)); // Y inverted
+
+                    const bfp = computeNavyBodyFat(waist, neck, state.heightCm);
+
+                    // Choose color according to selected metric
+                    let color;
+                    if (state.graphMetric === 'bf') {
+                        color = getBfColor(bfp);
+                    } else if (state.graphMetric === 'fatMass') {
+                        const fatKg = state.simulatedWeightKg * (bfp / 100);
+                        color = getMassColor(fatKg, 8, 30);
+                    } else {
+                        const leanKg = state.simulatedWeightKg * (1 - (bfp / 100));
+                        color = getMassColor(leanKg, 45, 85);
+                    }
+
+                    ctx.fillStyle = color;
+                    ctx.fillRect(padLeft + (i * cellW), padTop + (j * cellH), cellW + 0.6, cellH + 0.6);
+                }
+            }
+
+            // Draw Contour Iso-Lines for Body Fat % (e.g. 10%, 15%, 20%, 25%, 30%)
+            drawContourLines(padLeft, padTop, plotW, plotH, minWaist, maxWaist, minNeck, maxNeck);
+
+            // Draw Grid Lines & Ticks
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.fillStyle = '#64748b';
+            ctx.font = '11px "Fira Code", monospace';
+
+            // X-Axis (Waist) Ticks
+            const xSteps = 8;
+            for (let i = 0; i <= xSteps; i++) {
+                const u = i / xSteps;
+                const waistVal = minWaist + (u * (maxWaist - minWaist));
+                const x = padLeft + (u * plotW);
+
+                ctx.beginPath();
+                ctx.moveTo(x, padTop);
+                ctx.lineTo(x, padTop + plotH);
+                ctx.stroke();
+
+                const displayVal = isMetric ? waistVal.toFixed(1) : (waistVal * CM_TO_IN).toFixed(1);
+                ctx.textAlign = 'center';
+                ctx.fillText(displayVal, x, padTop + plotH + 18);
+            }
+
+            // Y-Axis (Neck) Ticks
+            const ySteps = 6;
+            for (let j = 0; j <= ySteps; j++) {
+                const v = j / ySteps;
+                const neckVal = maxNeck - (v * (maxNeck - minNeck));
+                const y = padTop + (v * plotH);
+
+                ctx.beginPath();
+                ctx.moveTo(padLeft, y);
+                ctx.lineTo(padLeft + plotW, y);
+                ctx.stroke();
+
+                const displayVal = isMetric ? neckVal.toFixed(1) : (neckVal * CM_TO_IN).toFixed(1);
+                ctx.textAlign = 'right';
+                ctx.fillText(displayVal, padLeft - 10, y + 4);
+            }
+
+            // Axis Titles
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px "Outfit", sans-serif';
+            ctx.textAlign = 'center';
+
+            // X Axis Title
+            const xUnit = isMetric ? 'cm' : 'in';
+            ctx.fillText(`Waist Circumference (${xUnit})  [Range: ±${isMetric ? '20 cm' : '10 in'}]`, padLeft + (plotW / 2), padTop + plotH + 42);
+
+            // Y Axis Title (Rotated)
+            ctx.save();
+            ctx.translate(20, padTop + (plotH / 2));
+            ctx.rotate(-Math.PI / 2);
+            const yUnit = isMetric ? 'cm' : 'in';
+            ctx.fillText(`Neck Circumference (${yUnit})  [Range: ±${isMetric ? '10 cm' : '5 in'}]`, 0, 0);
+            ctx.restore();
+
+            // Plot Borders
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.strokeRect(padLeft, padTop, plotW, plotH);
+
+            // Current Entered Measurement Point Marker
+            const userU = (state.waistCm - minWaist) / (maxWaist - minWaist);
+            const userV = (maxNeck - state.neckCm) / (maxNeck - minNeck);
+            const userX = padLeft + (userU * plotW);
+            const userY = padTop + (userV * plotH);
+
+            // Crosshair Projection Lines to Axes
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = 'rgba(0, 255, 170, 0.45)';
+            ctx.lineWidth = 1.5;
+
+            ctx.beginPath();
+            ctx.moveTo(padLeft, userY);
+            ctx.lineTo(userX, userY);
+            ctx.lineTo(userX, padTop + plotH);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Pulsing Neon Reticle for Current Point
+            const pulseRadius = 8 + Math.sin(pulsePhase) * 3;
+            ctx.beginPath();
+            ctx.arc(userX, userY, pulseRadius + 6, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 255, 170, 0.2)';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(userX, userY, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#00ffaa';
+            ctx.shadowColor = '#00ffaa';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            ctx.beginPath();
+            ctx.arc(userX, userY, 2, 0, Math.PI * 2);
+            ctx.fillStyle = '#090d16';
+            ctx.fill();
+
+            // Label at current point
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 11px "Outfit", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Current Entry', userX + 12, userY - 8);
+
+            // Hover Reticle
+            if (state.hoverCoord) {
+                const hx = state.hoverCoord.x;
+                const hy = state.hoverCoord.y;
+
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(hx, hy, 5, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(hx - 10, hy);
+                ctx.lineTo(hx + 10, hy);
+                ctx.moveTo(hx, hy - 10);
+                ctx.lineTo(hx, hy + 10);
+                ctx.stroke();
+            }
+        }
+
+        /* Color interpolation for Body Fat % */
+        function getBfColor(bfp) {
+            // Colors:
+            // < 6%: Cyan/Blue (#0284c7)
+            // 6 - 13%: Athlete Emerald (#10b981)
+            // 14 - 17%: Fitness Neon Green (#00ffaa)
+            // 18 - 24%: Average Amber (#f59e0b)
+            // >= 25%: Obese Red/Rose (#f43f5e)
+            if (bfp < 6.0) {
+                return 'rgba(2, 132, 199, 0.65)';
+            } else if (bfp < 14.0) {
+                const t = (bfp - 6.0) / 8.0;
+                return `rgba(16, 185, 129, ${0.55 + t * 0.15})`;
+            } else if (bfp < 18.0) {
+                const t = (bfp - 14.0) / 4.0;
+                return `rgba(0, 255, 170, ${0.60 + t * 0.15})`;
+            } else if (bfp < 25.0) {
+                const t = (bfp - 18.0) / 7.0;
+                return `rgba(245, 158, 11, ${0.60 + t * 0.20})`;
+            } else {
+                const t = Math.min(1, (bfp - 25.0) / 15.0);
+                return `rgba(244, 63, 94, ${0.65 + t * 0.25})`;
+            }
+        }
+
+        /* Color for Mass metric (Fat or Lean) */
+        function getMassColor(val, minV, maxV) {
+            const t = Math.max(0, Math.min(1, (val - minV) / (maxV - minV)));
+            // Blue to Cyan to Green to Amber
+            const r = Math.round(t < 0.5 ? 20 + t * 100 : 70 + (t - 0.5) * 300);
+            const g = Math.round(t < 0.5 ? 140 + t * 200 : 220 - (t - 0.5) * 100);
+            const b = Math.round(t < 0.5 ? 220 - t * 100 : 120 - (t - 0.5) * 200);
+            return `rgba(${r}, ${g}, ${b}, 0.7)`;
+        }
+
+        /* Draw Iso-contour curves across the grid */
+        function drawContourLines(padL, padT, plotW, plotH, minW, maxW, minN, maxN) {
+            const targets = [10.0, 15.0, 20.0, 25.0, 30.0];
+            ctx.lineWidth = 1.2;
+
+            targets.forEach(targetBfp => {
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+
+                let started = false;
+                const steps = 60;
+                for (let i = 0; i <= steps; i++) {
+                    const u = i / steps;
+                    const waist = minW + (u * (maxW - minW));
+
+                    // Solve for neck such that computeNavyBodyFat(waist, neck, height) = targetBfp
+                    // BFP = 495 / (1.0324 - 0.19077*log10(W-N) + 0.15456*log10(H)) - 450
+                    // 1.0324 - 0.19077*log10(W-N) + 0.15456*log10(H) = 495 / (BFP + 450)
+                    // 0.19077 * log10(W-N) = 1.0324 + 0.15456*log10(H) - 495 / (BFP + 450)
+                    const logHeight = Math.log10(state.heightCm);
+                    const rhs = 1.0324 + (0.15456 * logHeight) - (495 / (targetBfp + 450));
+                    const logDiff = rhs / 0.19077;
+                    const diff = Math.pow(10, logDiff);
+                    const neck = waist - diff;
+
+                    if (neck >= minN && neck <= maxN) {
+                        const v = (maxN - neck) / (maxN - minN);
+                        const x = padL + (u * plotW);
+                        const y = padT + (v * plotH);
+
+                        if (!started) {
+                            ctx.moveTo(x, y);
+                            started = true;
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    } else {
+                        started = false;
+                    }
+                }
+                ctx.stroke();
+            });
+        }
+
+        /* ==========================================================
+           CHART.JS MULTI-NECK SENSITIVITY CURVES
+           ========================================================== */
+        function renderCurvesChart() {
+            const ctxCanvas = document.getElementById('curvesChart').getContext('2d');
+            const isMetric = state.unitSystem === 'metric';
+
+            // X-Axis: Waist circumferences across range ±20 cm (or ±10 in)
+            const waistDelta = isMetric ? 20.0 : (10.0 * IN_TO_CM);
+            const minWaist = state.waistCm - waistDelta;
+            const maxWaist = state.waistCm + waistDelta;
+
+            const labels = [];
+            const stepCount = 20;
+            const waistPoints = [];
+
+            for (let i = 0; i <= stepCount; i++) {
+                const w = minWaist + (i / stepCount) * (maxWaist - minWaist);
+                waistPoints.push(w);
+                const labelVal = isMetric ? `${w.toFixed(1)} cm` : `${(w * CM_TO_IN).toFixed(1)}"`;
+                labels.push(labelVal);
+            }
+
+            // 5 Neck curves: Current - 10cm, Current - 5cm, Current, Current + 5cm, Current + 10cm
+            const neckOffsets = [-10, -5, 0, 5, 10]; // cm
+            const colors = [
+                '#38bdf8', // -10cm (cyan)
+                '#818cf8', // -5cm (indigo)
+                '#00ffaa', // Current (emerald glowing)
+                '#f59e0b', // +5cm (amber)
+                '#a855f7'  // +10cm (purple)
+            ];
+
+            const datasets = neckOffsets.map((offsetCm, idx) => {
+                const neckVal = state.neckCm + offsetCm;
+                const isCurrent = offsetCm === 0;
+
+                const data = waistPoints.map(w => {
+                    const bfp = computeNavyBodyFat(w, neckVal, state.heightCm);
+                    if (state.graphMetric === 'bf') {
+                        return parseFloat(bfp.toFixed(1));
+                    } else if (state.graphMetric === 'fatMass') {
+                        const massKg = state.simulatedWeightKg * (bfp / 100);
+                        return parseFloat((isMetric ? massKg : massKg * KG_TO_LB).toFixed(1));
+                    } else {
+                        const massKg = state.simulatedWeightKg * (1 - (bfp / 100));
+                        return parseFloat((isMetric ? massKg : massKg * KG_TO_LB).toFixed(1));
+                    }
+                });
+
+                let labelText = '';
+                if (isMetric) {
+                    labelText = isCurrent ? `Current Neck (${neckVal.toFixed(1)} cm)` : `Neck ${neckVal.toFixed(1)} cm (${offsetCm > 0 ? '+' : ''}${offsetCm}cm)`;
+                } else {
+                    const neckIn = neckVal * CM_TO_IN;
+                    const offsetIn = offsetCm * CM_TO_IN;
+                    labelText = isCurrent ? `Current Neck (${neckIn.toFixed(1)}")` : `Neck ${neckIn.toFixed(1)}" (${offsetIn > 0 ? '+' : ''}${offsetIn.toFixed(1)}")`;
+                }
+
+                return {
+                    label: labelText,
+                    data: data,
+                    borderColor: colors[idx],
+                    backgroundColor: colors[idx],
+                    borderWidth: isCurrent ? 3.5 : 1.8,
+                    tension: 0.3,
+                    pointRadius: isCurrent ? 2.5 : 0,
+                    pointHoverRadius: 6,
+                    borderDash: isCurrent ? [] : [4, 4]
+                };
+            });
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const yAxisTitle = state.graphMetric === 'bf' ?
+                'Body Fat %' :
+                (state.graphMetric === 'fatMass' ? `Fat Mass (${isMetric ? 'kg' : 'lbs'})` : `Lean Mass (${isMetric ? 'kg' : 'lbs'})`);
+
+            chartInstance = new Chart(ctxCanvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#94a3b8',
+                                font: { family: 'Outfit', size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            borderColor: 'rgba(0, 255, 170, 0.3)',
+                            borderWidth: 1,
+                            titleColor: '#f8fafc',
+                            bodyColor: '#94a3b8',
+                            bodyFont: { family: 'Fira Code' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: `Waist Circumference (${isMetric ? 'cm' : 'inches'})`,
+                                color: '#94a3b8',
+                                font: { family: 'Outfit' }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+                            ticks: { color: '#64748b', font: { family: 'Fira Code' } }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: yAxisTitle,
+                                color: '#94a3b8',
+                                font: { family: 'Outfit' }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+                            ticks: { color: '#64748b', font: { family: 'Fira Code' } }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

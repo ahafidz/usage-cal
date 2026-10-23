@@ -758,6 +758,25 @@
                             <span class="launch-action">Launch App →</span>
                         </div>
                     </a>
+
+                    <a href="navy-body-fat-calculator.html" class="app-card" data-category="calc health"
+                        data-name="navy-body-fat-calculator.html male navy body fat calculator neck waist graph">
+                        <div>
+                            <div class="card-header">
+                                <div class="card-icon" style="color: #00ffaa;">⚓</div>
+                                <div class="card-badges">
+                                    <span class="badge" style="background: rgba(0, 255, 170, 0.15); color: #00ffaa;">Calculators</span>
+                                    <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">Health & Fitness</span>
+                                </div>
+                            </div>
+                            <div class="card-title">Male US Navy Body Fat Calculator</div>
+                            <p class="card-desc">Official anthropometric body fat calculator with interactive 2D Neck-over-Waist contour heatmap and dynamic weight sensitivity slider (±20kg).</p>
+                        </div>
+                        <div class="card-footer">
+                            <span class="file-path">/navy-body-fat-calculator.html</span>
+                            <span class="launch-action">Launch App →</span>
+                        </div>
+                    </a>
                 </div>
             </section>
 
@@ -812,7 +831,8 @@
             'annuity_calculator.html',
             'wc2026.html',
             'wc2026_editor.html',
-            'recomposition-dashboard.html'
+            'recomposition-dashboard.html',
+            'navy-body-fat-calculator.html'
         ];
 
         // Format a raw HTML filename into a friendly readable title
@@ -938,17 +958,16 @@
             let visibleCount = 0;
 
             allCards.forEach(card => {
-                const category = card.getAttribute('data-category');
-                const nameText = card.getAttribute('data-name') || '';
+                const rawCategory = card.getAttribute('data-category') || '';
+                const categories = rawCategory.toLowerCase().split(/\s+/).filter(Boolean);
+                const nameText = (card.getAttribute('data-name') || '').toLowerCase();
                 const titleText = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
                 const descText = card.querySelector('.card-desc')?.textContent.toLowerCase() || '';
 
                 const matchesSearch = !query || nameText.includes(query) || titleText.includes(query) || descText.includes(query);
                 const matchesCategory = (filterCategory === 'all') ||
-                    (filterCategory === category) ||
-                    (filterCategory === 'auto' && card.classList.contains('auto-card')) ||
-                    (filterCategory === 'calc' && category === 'calc') ||
-                    (filterCategory === 'sports' && category === 'sports');
+                    categories.includes(filterCategory) ||
+                    (filterCategory === 'auto' && (card.classList.contains('auto-card') || categories.includes('auto')));
 
                 if (matchesSearch && matchesCategory) {
                     card.style.display = 'flex';
