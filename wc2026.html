@@ -7,13 +7,13 @@
     <title>FIFA World Cup 2026 - Road to Final</title>
     <style>
         :root {
-            --bg-color: #0f121d;
-            --card-bg: #161b2c;
-            --border-color: #2a3454;
-            --accent-green: #00ffaa;
+            --bg-color: #080809;
+            --card-bg: #141416;
+            --border-color: #303035;
+            --accent-green: #ececef;
             --text-color: #ffffff;
-            --text-muted: #8b9bb4;
-            --input-bg: #1e253f;
+            --text-muted: #aaaab0;
+            --input-bg: #1b1b1e;
         }
 
         * {
@@ -42,7 +42,7 @@
             text-transform: uppercase;
             letter-spacing: 2px;
             color: #fff;
-            text-shadow: 0 0 10px rgba(0, 255, 170, 0.3);
+            text-shadow: 0 0 10px rgba(210, 210, 215, 0.3);
         }
 
         .subtitle {
@@ -220,7 +220,27 @@
                 margin-bottom: 12px;
             }
         }
-    </style>
+
+/* Shared warm dark interface */
+:root { color-scheme: dark; }
+body { color: #f1f1f3; }
+input, select, textarea, button { font: inherit; }
+input:not([type="range"]), select, textarea { border-radius: 10px; }
+button, .app-card, .match-card { transition: border-color .2s ease, background-color .2s ease, color .2s ease, box-shadow .2s ease; }
+:where(a, button, input, select, textarea):focus-visible { outline: 2px solid #ececef; outline-offset: 3px; }
+input[type="range"] { accent-color: #ececef; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+/* Quiet dark surfaces, inspired by the reference. */
+:root { --border-color: #303035; --border-hover: #505056; }
+body { background-color: #080809; color: #f1f1f3; }
+.ambient-glow { display: none; }
+.app-card, .calc-card, .card, .match-card { backdrop-filter: none; box-shadow: none; }
+.app-card:hover, .match-card:hover { transform: none; box-shadow: none; border-color: #505056; }
+.app-card::after, .calc-card::after { display: none; }
+:where(a, button, input, select, textarea):focus-visible { outline: 2px solid #f06b79; outline-offset: 3px; }
+h2::before { background: #ef6676; }
+</style>
 </head>
 
 <body>
@@ -230,7 +250,7 @@
         <div class="subtitle">FIFA World Cup 2026 Knockout Stage Prediction Bracket</div>
         <div style="margin-top: 15px;">
             <a href="wc2026_editor.html"
-                style="background: #1e253f; color: #00ffaa; border: 1px solid #00ffaa; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: 600; font-size: 0.9rem; display: inline-block; transition: all 0.2s ease;">✏️
+                style="background: #1b1b1e; color: #ececef; border: 1px solid #ececef; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: 600; font-size: 0.9rem; display: inline-block; transition: all 0.2s ease;">✏️
                 Open Matches JSON Editor & Diff Viewer →</a>
         </div>
     </header>

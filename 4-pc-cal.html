@@ -11,17 +11,17 @@
 
 <style>
 :root {
-    --bg-dark: #090d16;
-    --bg-card: rgba(19, 26, 43, 0.75);
-    --bg-card-hover: rgba(28, 38, 64, 0.85);
+    --bg-dark: #080809;
+    --bg-card: rgba(18, 18, 20, 0.75);
+    --bg-card-hover: rgba(27, 27, 30, 0.85);
     --border-color: rgba(255, 255, 255, 0.08);
-    --border-hover: rgba(0, 255, 170, 0.4);
-    --accent-green: #00ffaa;
-    --accent-blue: #38bdf8;
-    --accent-purple: #a855f7;
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --text-dim: #64748b;
+    --border-hover: rgba(210, 210, 215, 0.4);
+    --accent-green: #ececef;
+    --accent-blue: #b9b9bf;
+    --accent-purple: #aaaab1;
+    --text-main: #f1f1f3;
+    --text-muted: #aaaab0;
+    --text-dim: #929299;
     --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -101,7 +101,7 @@ header {
 }
 
 .back-btn:hover, .repo-badge:hover {
-    background: rgba(0, 255, 170, 0.12);
+    background: rgba(210, 210, 215, 0.12);
     border-color: var(--accent-green);
     color: var(--accent-green);
     transform: translateY(-2px);
@@ -115,7 +115,7 @@ header {
 h1 {
     font-size: 2.5rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 60%, #64748b 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 60%, #929299 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.02em;
@@ -208,7 +208,7 @@ label {
 input {
     width: 100%;
     padding: 12px 16px;
-    background: rgba(15, 23, 42, 0.85);
+    background: rgba(17, 17, 19, 0.85);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     color: var(--text-main);
@@ -220,12 +220,12 @@ input {
 
 input:focus {
     border-color: var(--accent-green);
-    box-shadow: 0 0 0 3px rgba(0, 255, 170, 0.15);
-    background: rgba(28, 38, 64, 0.9);
+    box-shadow: 0 0 0 3px rgba(210, 210, 215, 0.15);
+    background: rgba(27, 27, 30, 0.9);
 }
 
 .metrics-box {
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(17, 17, 19, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 16px;
     padding: 20px;
@@ -260,7 +260,7 @@ input:focus {
 }
 
 .chart-wrapper {
-    background: rgba(15, 23, 42, 0.5);
+    background: rgba(17, 17, 19, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 16px;
     padding: 18px;
@@ -293,6 +293,26 @@ footer a {
     .header-top { flex-direction: column; align-items: stretch; text-align: center; }
     .back-btn, .repo-badge { justify-content: center; }
 }
+
+/* Shared warm dark interface */
+:root { color-scheme: dark; }
+body { color: #f1f1f3; }
+input, select, textarea, button { font: inherit; }
+input:not([type="range"]), select, textarea { border-radius: 10px; }
+button, .app-card, .match-card { transition: border-color .2s ease, background-color .2s ease, color .2s ease, box-shadow .2s ease; }
+:where(a, button, input, select, textarea):focus-visible { outline: 2px solid #ececef; outline-offset: 3px; }
+input[type="range"] { accent-color: #ececef; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+/* Quiet dark surfaces, inspired by the reference. */
+:root { --border-color: #303035; --border-hover: #505056; }
+body { background-color: #080809; color: #f1f1f3; }
+.ambient-glow { display: none; }
+.app-card, .calc-card, .card, .match-card { backdrop-filter: none; box-shadow: none; }
+.app-card:hover, .match-card:hover { transform: none; box-shadow: none; border-color: #505056; }
+.app-card::after, .calc-card::after { display: none; }
+:where(a, button, input, select, textarea):focus-visible { outline: 2px solid #f06b79; outline-offset: 3px; }
+h2::before { background: #ef6676; }
 </style>
 </head>
 
@@ -403,7 +423,7 @@ footer a {
                 </div>
                 <div class="metric-item">
                     <p>Total Dividends</p>
-                    <div class="big" id="res-dividends" style="font-size: 1.3rem; color: #38bdf8;">RM 0</div>
+                    <div class="big" id="res-dividends" style="font-size: 1.3rem; color: #b9b9bf;">RM 0</div>
                 </div>
                 <div class="metric-item">
                     <p>Total Balance</p>

@@ -12,17 +12,17 @@
         rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0b0e17;
-            --surface-bg: #131826;
-            --card-bg: #1a2133;
-            --card-hover: #222b42;
-            --border-color: #2a3454;
-            --accent-green: #00ffaa;
-            --accent-green-dim: rgba(0, 255, 170, 0.15);
-            --accent-blue: #38b6ff;
+            --bg-color: #080809;
+            --surface-bg: #111113;
+            --card-bg: #141416;
+            --card-hover: #1b1b1e;
+            --border-color: #303035;
+            --accent-green: #ececef;
+            --accent-green-dim: rgba(210, 210, 215, 0.15);
+            --accent-blue: #b9b9bf;
             --text-main: #ffffff;
-            --text-muted: #8b9bb4;
-            --input-bg: #111622;
+            --text-muted: #aaaab0;
+            --input-bg: #101012;
             --diff-del-bg: rgba(255, 71, 87, 0.15);
             --diff-del-border: #ff4757;
             --diff-ins-bg: rgba(46, 213, 115, 0.15);
@@ -155,7 +155,7 @@
         .btn-primary:hover {
             background: #00e699;
             color: #000;
-            box-shadow: 0 0 15px rgba(0, 255, 170, 0.4);
+            box-shadow: 0 0 15px rgba(210, 210, 215, 0.4);
         }
 
         .btn-danger {
@@ -227,7 +227,7 @@
             background: var(--accent-green-dim);
             color: var(--accent-green);
             border-color: var(--accent-green);
-            box-shadow: 0 0 10px rgba(0, 255, 170, 0.15);
+            box-shadow: 0 0 10px rgba(210, 210, 215, 0.15);
         }
 
         .search-box {
@@ -250,7 +250,7 @@
 
         .search-box input:focus {
             border-color: var(--accent-green);
-            box-shadow: 0 0 10px rgba(0, 255, 170, 0.15);
+            box-shadow: 0 0 10px rgba(210, 210, 215, 0.15);
         }
 
         .search-icon {
@@ -283,14 +283,14 @@
         }
 
         .match-editor-card:hover {
-            border-color: rgba(0, 255, 170, 0.5);
+            border-color: rgba(210, 210, 215, 0.5);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
             transform: translateY(-2px);
         }
 
         .match-editor-card.modified {
             border-color: var(--accent-green);
-            background: linear-gradient(145deg, var(--card-bg), rgba(0, 255, 170, 0.05));
+            background: linear-gradient(145deg, var(--card-bg), rgba(210, 210, 215, 0.05));
         }
 
         .match-editor-card.modified::before {
@@ -361,8 +361,8 @@
         }
 
         .team-row.winner {
-            border-color: rgba(0, 255, 170, 0.3);
-            background: rgba(0, 255, 170, 0.05);
+            border-color: rgba(210, 210, 215, 0.3);
+            background: rgba(210, 210, 215, 0.05);
         }
 
         .team-info {
@@ -414,7 +414,7 @@
         .score-input:focus {
             outline: none;
             border-color: var(--accent-green);
-            box-shadow: 0 0 8px rgba(0, 255, 170, 0.3);
+            box-shadow: 0 0 8px rgba(210, 210, 215, 0.3);
         }
 
         /* Penalty Section */
@@ -697,7 +697,7 @@
             font-weight: 700;
             padding: 12px 24px;
             border-radius: 8px;
-            box-shadow: 0 5px 20px rgba(0, 255, 170, 0.4);
+            box-shadow: 0 5px 20px rgba(210, 210, 215, 0.4);
             transform: translateY(100px);
             opacity: 0;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -709,7 +709,27 @@
             transform: translateY(0);
             opacity: 1;
         }
-    </style>
+
+/* Shared warm dark interface */
+:root { color-scheme: dark; }
+body { color: #f1f1f3; }
+input, select, textarea, button { font: inherit; }
+input:not([type="range"]), select, textarea { border-radius: 10px; }
+button, .app-card, .match-card { transition: border-color .2s ease, background-color .2s ease, color .2s ease, box-shadow .2s ease; }
+:where(a, button, input, select, textarea):focus-visible { outline: 2px solid #ececef; outline-offset: 3px; }
+input[type="range"] { accent-color: #ececef; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+/* Quiet dark surfaces, inspired by the reference. */
+:root { --border-color: #303035; --border-hover: #505056; }
+body { background-color: #080809; color: #f1f1f3; }
+.ambient-glow { display: none; }
+.app-card, .calc-card, .card, .match-card { backdrop-filter: none; box-shadow: none; }
+.app-card:hover, .match-card:hover { transform: none; box-shadow: none; border-color: #505056; }
+.app-card::after, .calc-card::after { display: none; }
+:where(a, button, input, select, textarea):focus-visible { outline: 2px solid #f06b79; outline-offset: 3px; }
+h2::before { background: #ef6676; }
+</style>
 </head>
 
 <body>
