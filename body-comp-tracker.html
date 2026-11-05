@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Body Recomposition Tracker - ahafidz/usage-cal</title>
+    <meta name="description"
+        content="Advanced 0.5% - 1% cut modeling with FFMI retention tracking, interactive pace projections, and check-in status engine.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: rgba(19, 26, 43, 0.75);
+            --bg-card-hover: rgba(28, 38, 64, 0.85);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(0, 255, 170, 0.4);
+            --accent-green: #00ffaa;
+            --accent-blue: #38bdf8;
+            --accent-indigo: #6366f1;
+            --accent-purple: #a855f7;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --accent-emerald: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Glow Backgrounds */
+        .ambient-glow {
+            position: fixed;
+            width: 550px;
+            height: 550px;
+            border-radius: 50%;
+            filter: blur(140px);
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.22;
+        }
+
+        .glow-1 {
+            top: -100px;
+            left: -100px;
+            background: var(--accent-indigo);
+        }
+
+        .glow-2 {
+            bottom: -150px;
+            right: -100px;
+            background: var(--accent-blue);
+        }
+
+        .glow-3 {
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--accent-purple);
+            opacity: 0.12;
+            width: 750px;
+            height: 750px;
+        }
+
+        .page-wrapper {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+            z-index: 1;
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            padding: 36px 0 28px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 32px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .back-btn,
+        .repo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-main);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .back-btn:hover,
+        .repo-badge:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+        }
+
+        .header-title-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .header-icon {
+            font-size: 2rem;
+            line-height: 1;
+            padding: 12px;
+            border-radius: 16px;
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: var(--accent-indigo);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            font-size: 2.1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-indigo) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        /* Badges */
+        .badges-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .pill-indigo {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            color: #a5b4fc;
+        }
+
+        .pill-emerald {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #6ee7b7;
+        }
+
+        /* Main Layout Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 360px minmax(0, 1fr);
+            gap: 28px;
+            align-items: start;
+            width: 100%;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 22px;
+            backdrop-filter: blur(14px);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.14);
+        }
+
+        .card-timeframe {
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .card-baseline {
+            border-left: 3px solid var(--accent-indigo);
+        }
+
+        .card-checkin {
+            border-left: 3px solid var(--accent-emerald);
+            background: rgba(16, 185, 129, 0.04);
+        }
+
+        .card-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #f1f5f9;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title svg {
+            width: 16px;
+            height: 16px;
+            stroke-width: 2.2;
+            color: var(--text-muted);
+        }
+
+        /* Form Controls */
+        .input-group {
+            margin-bottom: 14px;
+        }
+
+        .input-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(11, 16, 28, 0.85);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.92rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        input:focus {
+            border-color: var(--accent-indigo);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .card-checkin input {
+            border-color: rgba(16, 185, 129, 0.35);
+            background: rgba(6, 40, 30, 0.35);
+            color: #a7f3d0;
+        }
+
+        .card-checkin input:focus {
+            border-color: var(--accent-emerald);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        .input-hint {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        /* Action buttons */
+        .btn-reset {
+            width: 100%;
+            padding: 9px 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .btn-reset:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text-main);
+        }
+
+        /* Right Dashboard Column */
+        .dashboard-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-width: 0;
+            max-width: 100%;
+            width: 100%;
+        }
+
+        /* Top Metrics Row */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            width: 100%;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(14px);
+            min-width: 0;
+        }
+
+        .metric-watermark {
+            position: absolute;
+            right: -8px;
+            bottom: -8px;
+            opacity: 0.05;
+            pointer-events: none;
+            width: 80px;
+            height: 80px;
+            stroke-width: 1.5;
+            color: #ffffff;
+        }
+
+        .metric-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            position: relative;
+            z-index: 1;
+        }
+
+        .metric-val {
+            font-size: 1.85rem;
+            font-weight: 700;
+            font-family: 'Fira Code', monospace;
+            color: var(--text-main);
+            margin: 6px 0 2px;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .metric-sub {
+            font-size: 0.75rem;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+
+        .text-purple {
+            color: #c084fc;
+        }
+
+        .text-blue {
+            color: #60a5fa;
+        }
+
+        .text-emerald {
+            color: #34d399;
+        }
+
+        .text-rose {
+            color: #fb7185;
+        }
+
+        .ffmi-delta-pill {
+            font-size: 0.72rem;
+            font-weight: 600;
+            font-family: 'Fira Code', monospace;
+            padding: 2px 7px;
+            border-radius: 6px;
+        }
+
+        .delta-pos {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .delta-neg {
+            background: rgba(244, 63, 94, 0.2);
+            color: #fb7185;
+            border: 1px solid rgba(244, 63, 94, 0.4);
+        }
+
+        /* Status Engine Box */
+        .status-box {
+            border-radius: 16px;
+            padding: 22px 24px;
+            border: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.7);
+            display: flex;
+            align-items: flex-start;
+            gap: 18px;
+            backdrop-filter: blur(14px);
+            transition: var(--transition);
+        }
+
+        .status-box.status-success {
+            background: rgba(6, 78, 59, 0.28);
+            border-color: rgba(16, 185, 129, 0.45);
+            box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.15);
+        }
+
+        .status-box.status-warning {
+            background: rgba(120, 53, 15, 0.28);
+            border-color: rgba(245, 158, 11, 0.45);
+            box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.15);
+        }
+
+        .status-box.status-danger {
+            background: rgba(136, 19, 55, 0.28);
+            border-color: rgba(244, 63, 94, 0.45);
+            box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.15);
+        }
+
+        .status-box.status-info {
+            background: rgba(30, 58, 138, 0.28);
+            border-color: rgba(59, 130, 246, 0.45);
+            box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.15);
+        }
+
+        .status-box.status-neutral {
+            background: rgba(30, 41, 59, 0.4);
+            border-color: rgba(71, 85, 105, 0.4);
+        }
+
+        .status-icon-wrap {
+            flex-shrink: 0;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-success .status-icon-wrap {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .status-warning .status-icon-wrap {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .status-danger .status-icon-wrap {
+            background: rgba(244, 63, 94, 0.2);
+            color: #fb7185;
+        }
+
+        .status-info .status-icon-wrap {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+
+        .status-neutral .status-icon-wrap {
+            background: rgba(100, 116, 139, 0.2);
+            color: #94a3b8;
+        }
+
+        .status-content {
+            flex: 1;
+        }
+
+        .status-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .status-success .status-title {
+            color: #34d399;
+        }
+
+        .status-warning .status-title {
+            color: #fbbf24;
+        }
+
+        .status-danger .status-title {
+            color: #fb7185;
+        }
+
+        .status-info .status-title {
+            color: #60a5fa;
+        }
+
+        .status-neutral .status-title {
+            color: #f1f5f9;
+        }
+
+        .status-desc {
+            font-size: 0.92rem;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        .status-submetrics {
+            margin-top: 14px;
+            display: flex;
+            gap: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .status-submetric-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+            width: 100%;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 22px;
+            backdrop-filter: blur(14px);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+
+        .chart-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-fullscreen {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            flex-shrink: 0;
+            padding: 0;
+        }
+
+        .btn-fullscreen:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: var(--text-main);
+            transform: translateY(-1px);
+        }
+
+        .btn-fullscreen svg {
+            width: 17px;
+            height: 17px;
+            stroke-width: 2.2;
+        }
+
+        .fullscreen-hint {
+            display: none;
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            background: rgba(255, 255, 255, 0.06);
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* Fullscreen Overlay Mode */
+        .chart-card.is-fullscreen {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            z-index: 99999 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            padding: 24px 36px 30px !important;
+            background: rgba(9, 13, 22, 0.98) !important;
+            backdrop-filter: blur(28px) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            box-shadow: none !important;
+        }
+
+        .chart-card.is-fullscreen .chart-header {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .chart-card.is-fullscreen .chart-title {
+            font-size: 1.35rem;
+        }
+
+        .chart-card.is-fullscreen .chart-subtitle {
+            font-size: 0.88rem;
+            margin-top: 4px;
+        }
+
+        .chart-card.is-fullscreen .fullscreen-hint {
+            display: inline-block;
+        }
+
+        .chart-card.is-fullscreen .btn-fullscreen {
+            width: 38px;
+            height: 38px;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .chart-card.is-fullscreen .btn-fullscreen:hover {
+            background: rgba(244, 63, 94, 0.2);
+            border-color: rgba(244, 63, 94, 0.4);
+            color: #fb7185;
+        }
+
+        .chart-card.is-fullscreen .chart-container {
+            flex: 1 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            width: 100% !important;
+        }
+
+        .chart-card.is-fullscreen .chart-footer {
+            margin-top: 20px;
+            font-size: 0.92rem;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .chart-card.is-fullscreen .icon-expand {
+            display: none !important;
+        }
+
+        .chart-card.is-fullscreen .icon-compress {
+            display: block !important;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-title svg {
+            width: 18px;
+            height: 18px;
+            color: var(--text-muted);
+        }
+
+        .chart-subtitle {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            margin-top: 3px;
+        }
+
+        .mode-toggle {
+            display: flex;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 4px 12px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .toggle-btn.active {
+            background: rgba(51, 65, 85, 0.9);
+            color: var(--text-main);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .toggle-btn:hover:not(.active) {
+            color: #ffffff;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 290px;
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .chart-container canvas {
+            max-width: 100% !important;
+            display: block;
+        }
+
+        .chart-footer {
+            margin-top: 14px;
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .dot-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 32px 0;
+            text-align: center;
+            font-size: 0.88rem;
+            color: var(--text-dim);
+            margin-top: 48px;
+        }
+
+        footer a {
+            color: var(--accent-green);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 1080px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .charts-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .chart-header-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+
+    <div class="page-wrapper">
+        <header>
+            <div class="header-top">
+                <a href="index.html" class="back-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Back to Directory
+                </a>
+                <a href="https://github.com/ahafidz/usage-cal" target="_blank" rel="noopener noreferrer"
+                    class="repo-badge">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                        </path>
+                    </svg>
+                    ahafidz / usage-cal
+                </a>
+            </div>
+
+            <div class="header-title-row">
+                <div class="header-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                    </svg>
+                </div>
+                <div>
+                    <h1>Body Recomposition Tracker</h1>
+                    <p class="subtitle">Advanced 0.5% - 1% cut modeling with FFMI retention tracking</p>
+                    <div class="badges-row">
+                        <span class="pill-badge pill-indigo">0.5% - 1.0% Rate Modeling</span>
+                        <span class="pill-badge pill-emerald">FFMI Retention Engine</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-grid">
+            <!-- Left Column: Inputs -->
+            <div class="inputs-col" style="display: flex; flex-direction: column; gap: 18px;">
+                <!-- Card: Timeframe -->
+                <div class="card card-timeframe">
+                    <div class="card-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                        Timeframe
+                    </div>
+                    <div class="input-group">
+                        <label for="startDate">Start Date</label>
+                        <input type="date" id="startDate" value="2026-11-01">
+                    </div>
+                    <div class="input-group">
+                        <label for="currentDate">Current Date</label>
+                        <input type="date" id="currentDate">
+                    </div>
+                </div>
+
+                <!-- Card: Baseline Targets -->
+                <div class="card card-baseline">
+                    <div class="card-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10" />
+                            <circle cx="12" cy="12" r="6" />
+                            <circle cx="12" cy="12" r="2" />
+                        </svg>
+                        Baseline Targets
+                    </div>
+                    <div class="input-row">
+                        <div>
+                            <label for="startWeight">Start Wt (kg)</label>
+                            <input type="number" id="startWeight" value="90" step="0.1">
+                        </div>
+                        <div>
+                            <label for="targetWeight">Target Wt (kg)</label>
+                            <input type="number" id="targetWeight" value="75" step="0.1">
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div>
+                            <label for="startHeight">Height (cm)</label>
+                            <input type="number" id="startHeight" value="165" step="0.5">
+                        </div>
+                        <div>
+                            <label for="startBf">Start BF%</label>
+                            <input type="number" id="startBf" value="30" step="0.1">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="maxFfmiDrop">Max Allowable FFMI Drop</label>
+                        <input type="number" id="maxFfmiDrop" value="1.0" step="0.05">
+                        <p class="input-hint">Acceptable lean mass loss over the entire cut.</p>
+                    </div>
+                </div>
+
+                <!-- Card: Current Check-in -->
+                <div class="card card-checkin">
+                    <div class="card-title" style="color: #6ee7b7;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#10b981">
+                            <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+                            <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+                            <path d="M7 21h10" />
+                            <path d="M12 3v18" />
+                            <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
+                        </svg>
+                        Current Check-in
+                    </div>
+                    <div class="input-group">
+                        <label for="currentWeight" style="color: #6ee7b7;">Current Weight (kg)</label>
+                        <input type="number" id="currentWeight" value="88" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="currentBf" style="color: #6ee7b7;">Current BF%</label>
+                        <input type="number" id="currentBf" value="29.5" step="0.1">
+                    </div>
+                </div>
+
+                <button class="btn-reset" id="resetBtn" title="Reset all inputs back to original defaults">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                        <path d="M21 3v5h-5" />
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                        <path d="M3 21v-5h5" />
+                    </svg>
+                    Reset Defaults
+                </button>
+            </div>
+
+            <!-- Right Column: Dashboard & Visuals -->
+            <div class="dashboard-col">
+                <!-- Top 4 Metric Cards -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">Weeks to Target (1%)</span>
+                        <div class="metric-val" id="valWeeksTo1">--</div>
+                        <span class="metric-sub text-purple">Aggressive pace</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">Weeks to Target (0.5%)</span>
+                        <div class="metric-val" id="valWeeksTo05">--</div>
+                        <span class="metric-sub text-blue">Optimal recomp pace</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <svg class="metric-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                        <span class="metric-label">Weeks Elapsed</span>
+                        <div class="metric-val text-emerald" id="valElapsedWeeks">0.0</div>
+                        <span class="metric-sub" style="color: var(--text-muted);">Current Timeline</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <svg class="metric-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="m6.5 6.5 11 11" />
+                            <path d="m21 21-1-1a2.83 2.83 0 0 0 0-4l-1-1-4 4 1 1a2.83 2.83 0 0 0 4 0l1 1Z" />
+                            <path d="m3 3 1 1a2.83 2.83 0 0 0 0 4l1 1 4-4-1-1a2.83 2.83 0 0 0-4 0L3 3Z" />
+                            <path d="m14 10 4-4" />
+                            <path d="m6 18 4-4" />
+                        </svg>
+                        <span class="metric-label">Current FFMI</span>
+                        <div class="metric-val">
+                            <span id="valCurrentFfmi">--</span>
+                            <span class="ffmi-delta-pill delta-pos" id="valFfmiDelta">+0.00</span>
+                        </div>
+                        <span class="metric-sub" style="color: var(--text-muted);" id="valStartFfmi">Start: --</span>
+                    </div>
+                </div>
+
+                <!-- Status Engine Box -->
+                <div class="status-box status-neutral" id="statusBox">
+                    <div class="status-icon-wrap" id="statusIconWrap">
+                        <!-- Dynamic SVG Icon -->
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="16" x2="12" y2="12" />
+                            <line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
+                    </div>
+                    <div class="status-content">
+                        <div class="status-title" id="statusTitle">Initial Phase</div>
+                        <p class="status-desc" id="statusDesc">Not enough time has passed to evaluate weekly progress. Log
+                            your data again next week.</p>
+                        <div class="status-submetrics" id="statusSubmetrics" style="display: none;">
+                            <span class="status-submetric-pill">
+                                <span>Expected Wt:</span>
+                                <strong id="statusExpWeight" style="color: #f8fafc;">-- - -- kg</strong>
+                            </span>
+                            <span class="status-submetric-pill">
+                                <span>Min Expected FFMI:</span>
+                                <strong id="statusMinFfmi" style="color: #f8fafc;">--</strong>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Area (Side by Side) -->
+                <div class="charts-grid">
+                    <!-- Chart 1: Weight Loss Projection -->
+                    <div class="chart-card" id="cardWeightChart">
+                        <div class="chart-header">
+                            <div>
+                                <div class="chart-title">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+                                        <polyline points="17 18 23 18 23 12" />
+                                    </svg>
+                                    Weight Loss Projection
+                                </div>
+                                <div class="chart-subtitle">Expected trajectory vs. your current logged weight.</div>
+                            </div>
+                            <div class="chart-header-actions">
+                                <span class="fullscreen-hint">Esc to exit</span>
+                                <button type="button" class="btn-fullscreen" id="btnFullscreenWeight"
+                                    onclick="toggleChartFullscreen('cardWeightChart', 'weightChart')" title="Expand to Fullscreen">
+                                    <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <polyline points="15 3 21 3 21 9" />
+                                        <polyline points="9 21 3 21 3 15" />
+                                        <line x1="21" y1="3" x2="14" y2="10" />
+                                        <line x1="3" y1="21" x2="10" y2="14" />
+                                    </svg>
+                                    <svg class="icon-compress" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="display: none;">
+                                        <polyline points="4 14 10 14 10 20" />
+                                        <polyline points="20 10 14 10 14 4" />
+                                        <line x1="14" y1="10" x2="21" y2="3" />
+                                        <line x1="3" y1="21" x2="10" y2="14" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="weightChartCanvas"></canvas>
+                        </div>
+                        <div class="chart-footer">
+                            <span class="dot-indicator" style="background: #10b981;"></span>
+                            <span style="color: #34d399;" id="weightLegendText">Current Weight (88.0 kg)</span>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: Secondary Chart (FFMI / BF% Toggle) -->
+                    <div class="chart-card" id="cardSecondaryChart">
+                        <div class="chart-header">
+                            <div>
+                                <div class="chart-title" id="secondaryChartTitle">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="m6.5 6.5 11 11" />
+                                        <path d="m21 21-1-1a2.83 2.83 0 0 0 0-4l-1-1-4 4 1 1a2.83 2.83 0 0 0 4 0l1 1Z" />
+                                        <path d="m3 3 1 1a2.83 2.83 0 0 0 0 4l1 1 4-4-1-1a2.83 2.83 0 0 0-4 0L3 3Z" />
+                                        <path d="m14 10 4-4" />
+                                        <path d="m6 18 4-4" />
+                                    </svg>
+                                    Minimum FFMI Retention
+                                </div>
+                                <div class="chart-subtitle" id="secondaryChartSubtitle">Minimum lean mass you should
+                                    maintain based on weight lost.</div>
+                            </div>
+                            <div class="chart-header-actions">
+                                <div class="mode-toggle">
+                                    <button type="button" class="toggle-btn active" id="btnModeFfmi"
+                                        onclick="setSecondaryMode('ffmi')">FFMI</button>
+                                    <button type="button" class="toggle-btn" id="btnModeBf"
+                                        onclick="setSecondaryMode('bf')">BF%</button>
+                                </div>
+                                <span class="fullscreen-hint">Esc to exit</span>
+                                <button type="button" class="btn-fullscreen" id="btnFullscreenSecondary"
+                                    onclick="toggleChartFullscreen('cardSecondaryChart', 'secondaryChart')" title="Expand to Fullscreen">
+                                    <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <polyline points="15 3 21 3 21 9" />
+                                        <polyline points="9 21 3 21 3 15" />
+                                        <line x1="21" y1="3" x2="14" y2="10" />
+                                        <line x1="3" y1="21" x2="10" y2="14" />
+                                    </svg>
+                                    <svg class="icon-compress" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="display: none;">
+                                        <polyline points="4 14 10 14 10 20" />
+                                        <polyline points="20 10 14 10 14 4" />
+                                        <line x1="14" y1="10" x2="21" y2="3" />
+                                        <line x1="3" y1="21" x2="10" y2="14" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="secondaryChartCanvas"></canvas>
+                        </div>
+                        <div class="chart-footer">
+                            <span class="dot-indicator" style="background: #f59e0b;"></span>
+                            <span style="color: #fbbf24;" id="secondaryLegendText">Current FFMI (22.80)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Body Recomposition Tracker • <a href="index.html">Web Applications Directory</a> • <a
+                    href="https://github.com/ahafidz/usage-cal" target="_blank">GitHub Repository</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // Default Constants matching React TSX
+        const DEFAULTS = {
+            startDate: '2026-11-01',
+            currentDate: new Date().toISOString().split('T')[0],
+            startWeight: 90,
+            targetWeight: 75,
+            startHeight: 165,
+            startBf: 30,
+            maxFfmiDrop: 1.0,
+            currentWeight: 88,
+            currentBf: 29.5,
+            secondaryMode: 'ffmi'
+        };
+
+        let secondaryMode = DEFAULTS.secondaryMode;
+        let weightChart = null;
+        let secondaryChart = null;
+
+        // DOM elements
+        const elStartDate = document.getElementById('startDate');
+        const elCurrentDate = document.getElementById('currentDate');
+        const elStartWeight = document.getElementById('startWeight');
+        const elTargetWeight = document.getElementById('targetWeight');
+        const elStartHeight = document.getElementById('startHeight');
+        const elStartBf = document.getElementById('startBf');
+        const elMaxFfmiDrop = document.getElementById('maxFfmiDrop');
+        const elCurrentWeight = document.getElementById('currentWeight');
+        const elCurrentBf = document.getElementById('currentBf');
+        const btnReset = document.getElementById('resetBtn');
+
+        // Metric displays
+        const elValWeeksTo1 = document.getElementById('valWeeksTo1');
+        const elValWeeksTo05 = document.getElementById('valWeeksTo05');
+        const elValElapsedWeeks = document.getElementById('valElapsedWeeks');
+        const elValCurrentFfmi = document.getElementById('valCurrentFfmi');
+        const elValFfmiDelta = document.getElementById('valFfmiDelta');
+        const elValStartFfmi = document.getElementById('valStartFfmi');
+
+        // Status displays
+        const elStatusBox = document.getElementById('statusBox');
+        const elStatusIconWrap = document.getElementById('statusIconWrap');
+        const elStatusTitle = document.getElementById('statusTitle');
+        const elStatusDesc = document.getElementById('statusDesc');
+        const elStatusSubmetrics = document.getElementById('statusSubmetrics');
+        const elStatusExpWeight = document.getElementById('statusExpWeight');
+        const elStatusMinFfmi = document.getElementById('statusMinFfmi');
+
+        // Secondary Chart Header & Footer
+        const elSecondaryTitle = document.getElementById('secondaryChartTitle');
+        const elSecondarySubtitle = document.getElementById('secondaryChartSubtitle');
+        const elWeightLegend = document.getElementById('weightLegendText');
+        const elSecondaryLegend = document.getElementById('secondaryLegendText');
+        const btnModeFfmi = document.getElementById('btnModeFfmi');
+        const btnModeBf = document.getElementById('btnModeBf');
+
+        // SVG Icons
+        const ICONS = {
+            target: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+            shieldAlert: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+            trendingDown: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>`,
+            zap: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+            info: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
+            dumbbell: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1a2.83 2.83 0 0 0 0-4l-1-1-4 4 1 1a2.83 2.83 0 0 0 4 0l1 1Z"/><path d="m3 3 1 1a2.83 2.83 0 0 0 0 4l1 1 4-4-1-1a2.83 2.83 0 0 0-4 0L3 3Z"/><path d="m14 10 4-4"/><path d="m6 18 4-4"/></svg>`,
+            activity: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`
+        };
+
+        // Helper: Calculate FFMI
+        function calcFFMI(weight, bf, heightCm) {
+            const heightM = heightCm / 100;
+            if (heightM <= 0) return 0;
+            const leanMass = weight * (1 - (bf / 100));
+            return leanMass / (heightM * heightM);
+        }
+
+        // Toggle Secondary Mode (FFMI vs BF%)
+        function setSecondaryMode(mode) {
+            secondaryMode = mode;
+            if (mode === 'ffmi') {
+                btnModeFfmi.classList.add('active');
+                btnModeBf.classList.remove('active');
+                elSecondaryTitle.innerHTML = `${ICONS.dumbbell} Minimum FFMI Retention`;
+                elSecondarySubtitle.textContent = 'Minimum lean mass you should maintain based on weight lost.';
+            } else {
+                btnModeBf.classList.add('active');
+                btnModeFfmi.classList.remove('active');
+                elSecondaryTitle.innerHTML = `${ICONS.activity} Expected Body Fat %`;
+                elSecondarySubtitle.textContent = 'Expected body fat percentage based on lean mass retention.';
+            }
+            saveState();
+            recalculate();
+        }
+
+        // Save inputs to localStorage
+        function saveState() {
+            try {
+                const state = {
+                    startDate: elStartDate.value,
+                    currentDate: elCurrentDate.value,
+                    startWeight: elStartWeight.value,
+                    targetWeight: elTargetWeight.value,
+                    startHeight: elStartHeight.value,
+                    startBf: elStartBf.value,
+                    maxFfmiDrop: elMaxFfmiDrop.value,
+                    currentWeight: elCurrentWeight.value,
+                    currentBf: elCurrentBf.value,
+                    secondaryMode
+                };
+                localStorage.setItem('bodyCompTrackerData', JSON.stringify(state));
+            } catch (e) { }
+        }
+
+        // Load inputs from localStorage
+        function loadState() {
+            try {
+                const saved = localStorage.getItem('bodyCompTrackerData');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    elStartDate.value = parsed.startDate || DEFAULTS.startDate;
+                    elCurrentDate.value = parsed.currentDate || DEFAULTS.currentDate;
+                    elStartWeight.value = parsed.startWeight ?? DEFAULTS.startWeight;
+                    elTargetWeight.value = parsed.targetWeight ?? DEFAULTS.targetWeight;
+                    elStartHeight.value = parsed.startHeight ?? DEFAULTS.startHeight;
+                    elStartBf.value = parsed.startBf ?? DEFAULTS.startBf;
+                    elMaxFfmiDrop.value = parsed.maxFfmiDrop ?? DEFAULTS.maxFfmiDrop;
+                    elCurrentWeight.value = parsed.currentWeight ?? DEFAULTS.currentWeight;
+                    elCurrentBf.value = parsed.currentBf ?? DEFAULTS.currentBf;
+                    if (parsed.secondaryMode) {
+                        setSecondaryMode(parsed.secondaryMode);
+                    }
+                    return;
+                }
+            } catch (e) { }
+
+            // Default fallback
+            elStartDate.value = DEFAULTS.startDate;
+            elCurrentDate.value = DEFAULTS.currentDate;
+            elStartWeight.value = DEFAULTS.startWeight;
+            elTargetWeight.value = DEFAULTS.targetWeight;
+            elStartHeight.value = DEFAULTS.startHeight;
+            elStartBf.value = DEFAULTS.startBf;
+            elMaxFfmiDrop.value = DEFAULTS.maxFfmiDrop;
+            elCurrentWeight.value = DEFAULTS.currentWeight;
+            elCurrentBf.value = DEFAULTS.currentBf;
+            setSecondaryMode(DEFAULTS.secondaryMode);
+        }
+
+        // Reset inputs
+        btnReset.addEventListener('click', () => {
+            elStartDate.value = DEFAULTS.startDate;
+            elCurrentDate.value = new Date().toISOString().split('T')[0];
+            elStartWeight.value = DEFAULTS.startWeight;
+            elTargetWeight.value = DEFAULTS.targetWeight;
+            elStartHeight.value = DEFAULTS.startHeight;
+            elStartBf.value = DEFAULTS.startBf;
+            elMaxFfmiDrop.value = DEFAULTS.maxFfmiDrop;
+            elCurrentWeight.value = DEFAULTS.currentWeight;
+            elCurrentBf.value = DEFAULTS.currentBf;
+            setSecondaryMode('ffmi');
+            saveState();
+            recalculate();
+        });
+
+        // Initialize Charts with Chart.js
+        function initCharts() {
+            const fontOutfit = { family: 'Outfit', size: 12 };
+            const fontFira = { family: 'Fira Code', size: 11 };
+            const gridColor = 'rgba(255, 255, 255, 0.06)';
+            const tickColor = '#94a3b8';
+
+            // Common Chart Options
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#cbd5e1',
+                            font: fontOutfit,
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            padding: 14
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#cbd5e1',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        padding: 10,
+                        titleFont: { family: 'Outfit', weight: '600' },
+                        bodyFont: { family: 'Fira Code', size: 12 }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        title: { display: true, text: 'Week', color: tickColor, font: fontOutfit },
+                        grid: { color: gridColor },
+                        ticks: { color: tickColor, font: fontFira, precision: 0 }
+                    },
+                    y: {
+                        grid: { color: gridColor },
+                        ticks: { color: tickColor, font: fontFira }
+                    }
+                }
+            };
+
+            // 1. Weight Chart
+            const weightCtx = document.getElementById('weightChartCanvas').getContext('2d');
+            weightChart = new Chart(weightCtx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: '0.5% / Week',
+                            data: [],
+                            borderColor: '#3b82f6',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            label: '1.0% / Week',
+                            data: [],
+                            borderColor: '#a855f7',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            type: 'scatter',
+                            label: 'Current Check-in',
+                            data: [],
+                            backgroundColor: '#10b981',
+                            borderColor: '#022c22',
+                            borderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        tooltip: {
+                            ...commonOptions.plugins.tooltip,
+                            callbacks: {
+                                title: function (items) {
+                                    if (!items.length) return '';
+                                    return 'Week ' + items[0].parsed.x.toFixed(1);
+                                },
+                                label: function (context) {
+                                    const val = context.parsed.y;
+                                    return `${context.dataset.label}: ${val.toFixed(1)} kg`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            title: { display: true, text: 'Weight (kg)', color: tickColor, font: fontOutfit }
+                        }
+                    }
+                }
+            });
+
+            // 2. Secondary Chart (FFMI / BF%)
+            const secondaryCtx = document.getElementById('secondaryChartCanvas').getContext('2d');
+            secondaryChart = new Chart(secondaryCtx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: '0.5% Pace',
+                            data: [],
+                            borderColor: '#3b82f6',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            label: '1.0% Pace',
+                            data: [],
+                            borderColor: '#a855f7',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            type: 'scatter',
+                            label: 'Current Check-in',
+                            data: [],
+                            backgroundColor: '#f59e0b',
+                            borderColor: '#451a03',
+                            borderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        tooltip: {
+                            ...commonOptions.plugins.tooltip,
+                            callbacks: {
+                                title: function (items) {
+                                    if (!items.length) return '';
+                                    return 'Week ' + items[0].parsed.x.toFixed(1);
+                                },
+                                label: function (context) {
+                                    const isFfmi = secondaryMode === 'ffmi';
+                                    const val = context.parsed.y;
+                                    return `${context.dataset.label}: ${val.toFixed(isFfmi ? 2 : 1)}${isFfmi ? '' : '%'}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            title: { display: true, text: 'FFMI', color: tickColor, font: fontOutfit }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Recalculate and update UI & charts
+        function recalculate() {
+            const sWeight = parseFloat(elStartWeight.value) || 0;
+            const sHeight = parseFloat(elStartHeight.value) || 0;
+            const sBf = parseFloat(elStartBf.value) || 0;
+            const tWeight = parseFloat(elTargetWeight.value) || 0;
+            const cWeight = parseFloat(elCurrentWeight.value) || 0;
+            const cBf = parseFloat(elCurrentBf.value) || 0;
+            const mFfmiDrop = parseFloat(elMaxFfmiDrop.value) || 0;
+
+            const startFfmi = calcFFMI(sWeight, sBf, sHeight);
+            const currentFfmi = calcFFMI(cWeight, cBf, sHeight);
+
+            // Time calculations
+            const sDate = new Date(elStartDate.value);
+            const cDate = new Date(elCurrentDate.value);
+            let elapsedWeeks = (cDate - sDate) / (1000 * 60 * 60 * 24 * 7);
+            if (isNaN(elapsedWeeks) || elapsedWeeks < 0) elapsedWeeks = 0;
+
+            // Weeks to target:
+            // Formula: W_target = W_start * (1 - rate)^weeks
+            // weeks = log(W_target / W_start) / log(1 - rate)
+            let weeksTo1 = NaN;
+            let weeksTo05 = NaN;
+            if (sWeight > 0 && tWeight > 0 && tWeight < sWeight) {
+                weeksTo1 = Math.log(tWeight / sWeight) / Math.log(0.99);
+                weeksTo05 = Math.log(tWeight / sWeight) / Math.log(0.995);
+            }
+
+            // Current Expected Metrics
+            const expectedWeight1 = sWeight * Math.pow(0.99, elapsedWeeks);
+            const expectedWeight05 = sWeight * Math.pow(0.995, elapsedWeeks);
+
+            const denom = sWeight - tWeight;
+            const fractionLostCurrent = denom !== 0 ? (sWeight - cWeight) / denom : 0;
+            const cappedFraction = Math.min(1, Math.max(0, fractionLostCurrent));
+            const minExpectedFfmi = startFfmi - (cappedFraction * mFfmiDrop);
+
+            // Update Metric Cards
+            elValWeeksTo1.textContent = (isFinite(weeksTo1) && weeksTo1 > 0) ? weeksTo1.toFixed(1) : '--';
+            elValWeeksTo05.textContent = (isFinite(weeksTo05) && weeksTo05 > 0) ? weeksTo05.toFixed(1) : '--';
+            elValElapsedWeeks.textContent = elapsedWeeks.toFixed(1);
+            elValCurrentFfmi.textContent = currentFfmi.toFixed(2);
+            elValStartFfmi.textContent = `Start: ${startFfmi.toFixed(2)}`;
+
+            const ffmiDelta = currentFfmi - startFfmi;
+            const deltaSign = ffmiDelta > 0 ? '+' : '';
+            elValFfmiDelta.textContent = `${deltaSign}${ffmiDelta.toFixed(2)}`;
+            if (ffmiDelta >= 0) {
+                elValFfmiDelta.className = 'ffmi-delta-pill delta-pos';
+            } else {
+                elValFfmiDelta.className = 'ffmi-delta-pill delta-neg';
+            }
+
+            // Status Engine Logic
+            let statusTitle = '';
+            let statusDesc = '';
+            let statusType = 'neutral';
+
+            if (elapsedWeeks < 0.2) {
+                statusTitle = "Initial Phase";
+                statusDesc = "Not enough time has passed to evaluate weekly progress. Log your data again next week.";
+                statusType = "neutral";
+            } else {
+                const isWeightFast = cWeight < expectedWeight1;
+                const isWeightSlow = cWeight > expectedWeight05;
+                const isWeightOk = !isWeightFast && !isWeightSlow;
+                const isFfmiLow = currentFfmi < minExpectedFfmi;
+
+                if (isWeightOk && !isFfmiLow) {
+                    statusTitle = "Status: Optimal Progress";
+                    statusDesc = "Weight drop is perfectly on track (0.5% - 1% range) and FFMI is maintained well above the minimum threshold. Suggestion: Keep doing exactly what you're doing. Deficit and training are dialed in.";
+                    statusType = "success";
+                } else if (isWeightOk && isFfmiLow) {
+                    statusTitle = "Status: Lean Mass Warning";
+                    statusDesc = "Weight drop is OK, but FFMI is too low. Suggestion: For next week, focus on hitting protein targets and increasing hypertrophy training volume to prevent further lean mass loss.";
+                    statusType = "warning";
+                } else if (isWeightSlow && !isFfmiLow) {
+                    statusTitle = "Status: Recomping (Excellent)";
+                    statusDesc = "Weight loss is slow, but FFMI is optimal. Suggestion: You are successfully trading fat for muscle. Maintain current deficit and monitor for another week before changing anything.";
+                    statusType = "info";
+                } else if (isWeightSlow && isFfmiLow) {
+                    statusTitle = "Status: Stalled Progress";
+                    statusDesc = "Weight is slow and FFMI is dropping. Suggestion: You might be miscalculating intake or missing workouts. Ensure accurate macro tracking and maintain training intensity.";
+                    statusType = "danger";
+                } else if (isWeightFast && isFfmiLow) {
+                    statusTitle = "Status: Catabolic Risk";
+                    statusDesc = "Weight dropping too fast, risking muscle loss. Suggestion: Reduce caloric deficit slightly to stay within the 1% weekly limit and prioritize recovery.";
+                    statusType = "danger";
+                } else if (isWeightFast && !isFfmiLow) {
+                    statusTitle = "Status: Rapid Drop (Monitor)";
+                    statusDesc = "Losing weight fast, but retaining muscle. Suggestion: Likely an initial drop in water weight/glycogen. Monitor closely next week to ensure fatigue doesn't build up.";
+                    statusType = "info";
+                }
+            }
+
+            // Apply Status Styling & Icon
+            elStatusBox.className = `status-box status-${statusType}`;
+            elStatusTitle.textContent = statusTitle;
+            elStatusDesc.textContent = statusDesc;
+
+            if (statusType === 'success') {
+                elStatusIconWrap.innerHTML = ICONS.target;
+            } else if (statusType === 'warning') {
+                elStatusIconWrap.innerHTML = ICONS.shieldAlert;
+            } else if (statusType === 'danger') {
+                elStatusIconWrap.innerHTML = ICONS.trendingDown;
+            } else if (statusType === 'info') {
+                elStatusIconWrap.innerHTML = ICONS.zap;
+            } else {
+                elStatusIconWrap.innerHTML = ICONS.info;
+            }
+
+            if (elapsedWeeks >= 0.2) {
+                elStatusSubmetrics.style.display = 'flex';
+                elStatusExpWeight.textContent = `${expectedWeight1.toFixed(1)} - ${expectedWeight05.toFixed(1)} kg`;
+                elStatusMinFfmi.textContent = minExpectedFfmi.toFixed(2);
+            } else {
+                elStatusSubmetrics.style.display = 'none';
+            }
+
+            // Legend indicators
+            elWeightLegend.textContent = `Current Weight (${cWeight.toFixed(1)} kg)`;
+            if (secondaryMode === 'ffmi') {
+                elSecondaryLegend.textContent = `Current FFMI (${currentFfmi.toFixed(2)})`;
+            } else {
+                elSecondaryLegend.textContent = `Current BF% (${cBf.toFixed(1)}%)`;
+            }
+
+            // Generate Chart Curves Data
+            let maxWeeksToPlot = isFinite(weeksTo05) && weeksTo05 > 0 ? Math.ceil(weeksTo05) + 2 : 52;
+            if (maxWeeksToPlot < 12) maxWeeksToPlot = 12;
+            if (maxWeeksToPlot > 104) maxWeeksToPlot = 104;
+
+            const wData05 = [];
+            const wData1 = [];
+            const secData05 = [];
+            const secData1 = [];
+
+            for (let w = 0; w <= maxWeeksToPlot; w++) {
+                const w05 = sWeight * Math.pow(0.995, w);
+                const w1 = sWeight * Math.pow(0.99, w);
+
+                const f05 = denom !== 0 ? (sWeight - w05) / denom : 0;
+                const ffmi05 = startFfmi - (Math.min(1, Math.max(0, f05)) * mFfmiDrop);
+                const lm05 = ffmi05 * Math.pow(sHeight / 100, 2);
+                const bf05 = w05 > 0 ? ((w05 - lm05) / w05) * 100 : 0;
+
+                const f1 = denom !== 0 ? (sWeight - w1) / denom : 0;
+                const ffmi1 = startFfmi - (Math.min(1, Math.max(0, f1)) * mFfmiDrop);
+                const lm1 = ffmi1 * Math.pow(sHeight / 100, 2);
+                const bf1 = w1 > 0 ? ((w1 - lm1) / w1) * 100 : 0;
+
+                wData05.push({ x: w, y: w05 });
+                wData1.push({ x: w, y: w1 });
+
+                if (secondaryMode === 'ffmi') {
+                    secData05.push({ x: w, y: ffmi05 });
+                    secData1.push({ x: w, y: ffmi1 });
+                } else {
+                    secData05.push({ x: w, y: bf05 });
+                    secData1.push({ x: w, y: bf1 });
+                }
+            }
+
+            // Update Chart 1 (Weight)
+            if (weightChart) {
+                weightChart.data.datasets[0].data = wData05;
+                weightChart.data.datasets[1].data = wData1;
+                weightChart.data.datasets[2].data = [{ x: elapsedWeeks, y: cWeight }];
+                weightChart.update('none');
+            }
+
+            // Update Chart 2 (Secondary)
+            if (secondaryChart) {
+                const isFfmi = secondaryMode === 'ffmi';
+                secondaryChart.options.scales.y.title.text = isFfmi ? 'FFMI' : 'Body Fat (%)';
+                secondaryChart.data.datasets[0].label = isFfmi ? 'Min FFMI (0.5% pace)' : 'Expected BF% (0.5% pace)';
+                secondaryChart.data.datasets[1].label = isFfmi ? 'Min FFMI (1.0% pace)' : 'Expected BF% (1.0% pace)';
+                secondaryChart.data.datasets[0].data = secData05;
+                secondaryChart.data.datasets[1].data = secData1;
+                secondaryChart.data.datasets[2].data = [{ x: elapsedWeeks, y: isFfmi ? currentFfmi : cBf }];
+                secondaryChart.data.datasets[2].label = isFfmi ? 'Current FFMI' : 'Current BF%';
+                secondaryChart.update('none');
+            }
+        }
+
+        // Add event listeners to all inputs
+        [
+            elStartDate, elCurrentDate, elStartWeight, elTargetWeight,
+            elStartHeight, elStartBf, elMaxFfmiDrop, elCurrentWeight, elCurrentBf
+        ].forEach(input => {
+            input.addEventListener('input', () => {
+                saveState();
+                recalculate();
+            });
+            input.addEventListener('change', () => {
+                saveState();
+                recalculate();
+            });
+        });
+
+        // Fullscreen Handling
+        let activeFullscreenCardId = null;
+
+        function toggleChartFullscreen(cardId, chartVarName) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+
+            const chart = chartVarName === 'weightChart' ? weightChart : secondaryChart;
+            const isCurrentlyFullscreen = card.classList.contains('is-fullscreen');
+
+            if (activeFullscreenCardId && activeFullscreenCardId !== cardId) {
+                exitChartFullscreen(activeFullscreenCardId);
+            }
+
+            if (!isCurrentlyFullscreen) {
+                card.classList.add('is-fullscreen');
+                document.body.style.overflow = 'hidden';
+                activeFullscreenCardId = cardId;
+
+                const btn = card.querySelector('.btn-fullscreen');
+                if (btn) btn.title = 'Exit Fullscreen (Esc)';
+
+                if (document.fullscreenEnabled && !document.fullscreenElement) {
+                    card.requestFullscreen().catch(() => {});
+                }
+
+                requestAnimationFrame(() => {
+                    if (chart) chart.resize();
+                });
+            } else {
+                exitChartFullscreen(cardId);
+            }
+        }
+
+        function exitChartFullscreen(cardId) {
+            const targetId = cardId || activeFullscreenCardId;
+            if (!targetId) return;
+
+            const card = document.getElementById(targetId);
+            if (!card) return;
+
+            card.classList.remove('is-fullscreen');
+            document.body.style.overflow = '';
+            activeFullscreenCardId = null;
+
+            const btn = card.querySelector('.btn-fullscreen');
+            if (btn) btn.title = 'Expand to Fullscreen';
+
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+
+            // Reset canvas dimensions so Chart.js recalculates fresh dimensions from restored grid track
+            const canvases = document.querySelectorAll('.chart-container canvas');
+            canvases.forEach(c => {
+                c.style.width = '100%';
+                c.style.height = '100%';
+            });
+
+            // Force reflow and re-measure in standard grid dimensions
+            requestAnimationFrame(() => {
+                if (weightChart) weightChart.resize();
+                if (secondaryChart) secondaryChart.resize();
+                setTimeout(() => {
+                    if (weightChart) weightChart.resize();
+                    if (secondaryChart) secondaryChart.resize();
+                }, 80);
+            });
+        }
+
+        // Handle Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && activeFullscreenCardId) {
+                exitChartFullscreen(activeFullscreenCardId);
+            }
+        });
+
+        // Handle browser native fullscreen change
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && activeFullscreenCardId) {
+                exitChartFullscreen(activeFullscreenCardId);
+            }
+        });
+
+        // Window resize listener
+        window.addEventListener('resize', () => {
+            if (weightChart) weightChart.resize();
+            if (secondaryChart) secondaryChart.resize();
+        });
+
+        // Initialize on DOM load
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            loadState();
+            recalculate();
+        });
+    </script>
+</body>
+
+</html>
+
